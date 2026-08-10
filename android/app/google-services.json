@@ -29,6 +29,13 @@
             {
               "client_id": "1089902879044-hvdq1p96ecf7fjn0vn7rhobg276i0ph4.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "1089902879044-6kvgcvv72ihgjemsb753ncrqmd28sd9r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ieumProject"
+              }
             }
           ]
         }

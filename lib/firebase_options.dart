@@ -57,7 +57,6 @@ class DefaultFirebaseOptions {
     projectId: 'sosegi-70ec4',
     storageBucket: 'sosegi-70ec4.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCT758A6i35zAtz55ExetIZ21TpKR9YVjk',
     appId: '1:1089902879044:ios:e998592d582dd0402c3711',
@@ -67,7 +66,6 @@ class DefaultFirebaseOptions {
     iosClientId: '1089902879044-6kvgcvv72ihgjemsb753ncrqmd28sd9r.apps.googleusercontent.com',
     iosBundleId: 'com.example.ieumProject',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCT758A6i35zAtz55ExetIZ21TpKR9YVjk',
     appId: '1:1089902879044:ios:e998592d582dd0402c3711',
