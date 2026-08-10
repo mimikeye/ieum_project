@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1089902879044",
+    "project_id": "sosegi-70ec4",
+    "storage_bucket": "sosegi-70ec4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1089902879044:android:93cee246b2ae82a62c3711",
+        "android_client_info": {
+          "package_name": "com.example.ieum_project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1089902879044-hvdq1p96ecf7fjn0vn7rhobg276i0ph4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3C6EtDQivEOhID4hcstl2sTbQ1f177lA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1089902879044-hvdq1p96ecf7fjn0vn7rhobg276i0ph4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
