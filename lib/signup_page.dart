@@ -120,7 +120,7 @@ class _SignupPageState extends State<SignupPage> {
 
       _showMessage('회원가입이 완료되었습니다.');
 
-      Navigator.pop(context);
+      Navigator.popUntil(context, (route) => route.isFirst);
     } on FirebaseAuthException catch (e) {
       String message = '회원가입에 실패했습니다.';
 

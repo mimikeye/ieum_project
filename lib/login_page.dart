@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'signup_info_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ==========================================
   // 입력 컨트롤러
@@ -56,10 +58,10 @@ class _LoginPageState extends State<LoginPage> {
   // ==========================================
 
   Future<void> _login() async {
-    final email = _emailController.text.trim();
+    final id = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
+    if (id.isEmpty || password.isEmpty) {
       _showMessage('아이디와 비밀번호를 입력해주세요.');
       return;
     }
@@ -70,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await _auth.signInWithEmailAndPassword(
-        email: email,
+        email: '$id@ieum-users.com',
         password: password,
       );
 
@@ -175,7 +177,24 @@ class _LoginPageState extends State<LoginPage> {
         idToken: googleAuth.idToken,
       );
 
-      await _auth.signInWithCredential(credential);
+      final userCredential =
+          await _auth.signInWithCredential(credential);
+
+      final isNewUser =
+          userCredential.additionalUserInfo?.isNewUser ?? false;
+
+      if (isNewUser) {
+        final uid = userCredential.user?.uid;
+
+        if (uid != null) {
+          await _firestore.collection('users').doc(uid).set({
+            'username': null,
+            'nickname': googleUser.displayName ?? '',
+            'email': googleUser.email,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
 
       if (!mounted) return;
 
