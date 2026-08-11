@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignupPage extends StatefulWidget {
-  const SignupPage({super.key});
+  final String nickname;
+  final String email;
+
+  const SignupPage({
+    super.key,
+    required this.nickname,
+    required this.email,
+  });
 
   @override
   State<SignupPage> createState() => _SignupPageState();
@@ -14,16 +22,19 @@ class _SignupPageState extends State<SignupPage> {
   // ============================================================
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ============================================================
-  // 입력 컨트롤러
+  // 입력 컨트롤러 / 포커스 노드
   // ============================================================
 
-  final TextEditingController _emailController =
-      TextEditingController();
+  final TextEditingController _idController = TextEditingController();
 
   final TextEditingController _passwordController =
       TextEditingController();
+
+  final FocusNode _idFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
 
   // ============================================================
   // 상태
@@ -33,16 +44,24 @@ class _SignupPageState extends State<SignupPage> {
 
   bool _obscurePassword = true;
 
+  @override
+  void initState() {
+    super.initState();
+
+    _idFocusNode.addListener(() => setState(() {}));
+    _passwordFocusNode.addListener(() => setState(() {}));
+  }
+
   // ============================================================
   // 회원가입
   // ============================================================
 
   Future<void> _signup() async {
-    final email = _emailController.text.trim();
+    final id = _idController.text.trim();
     final password = _passwordController.text.trim();
 
     // 아이디 입력 확인
-    if (email.isEmpty) {
+    if (id.isEmpty) {
       _showMessage('아이디를 입력해주세요.');
       return;
     }
@@ -63,11 +82,39 @@ class _SignupPageState extends State<SignupPage> {
       _isLoading = true;
     });
 
+    // TODO:
+    // 아이디 → 내부용 이메일 변환 ('$id@ieum-users.com')
+    // + Firestore에 nickname / 실제 email 저장하는 로직은
+    // 다음 단계에서 추가 예정.
+
     try {
-      await _auth.createUserWithEmailAndPassword(
-        email: email,
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: '$id@ieum-users.com',
         password: password,
       );
+
+      final uid = credential.user?.uid;
+
+      if (uid == null) {
+        _showMessage('회원가입 중 오류가 발생했습니다.');
+        return;
+      }
+
+      // Firestore에 부가 정보 저장
+      try {
+        await _firestore.collection('users').doc(uid).set({
+          'username': id,
+          'nickname': widget.nickname,
+          'email': widget.email,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        // Firestore 저장 실패 시, 방금 만든 계정을 롤백
+        await credential.user?.delete();
+
+        _showMessage('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.');
+        return;
+      }
 
       if (!mounted) return;
 
@@ -78,9 +125,9 @@ class _SignupPageState extends State<SignupPage> {
       String message = '회원가입에 실패했습니다.';
 
       if (e.code == 'email-already-in-use') {
-        message = '이미 가입된 아이디입니다.';
+        message = '이미 사용 중인 아이디입니다.';
       } else if (e.code == 'invalid-email') {
-        message = '올바른 아이디 형식을 입력해주세요.';
+        message = '아이디 형식이 올바르지 않습니다.';
       } else if (e.code == 'weak-password') {
         message = '비밀번호가 너무 간단합니다.';
       }
@@ -110,75 +157,18 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   // ============================================================
-  // 입력창 디자인
+  // 종료
   // ============================================================
 
-  InputDecoration _inputDecoration({
-    required String label,
-    required String hint,
-    Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
+  @override
+  void dispose() {
+    _idController.dispose();
+    _passwordController.dispose();
 
-      // 작은 위쪽 라벨
-      labelStyle: const TextStyle(
-        color: Color(0xFFBDBDBD),
-        fontSize: 9,
-      ),
+    _idFocusNode.dispose();
+    _passwordFocusNode.dispose();
 
-      // 입력 전 표시되는 글씨
-      hintStyle: const TextStyle(
-        color: Color(0xFFBDBDBD),
-        fontSize: 14,
-      ),
-
-      // 입력창에 글자가 들어가면
-      // label이 위쪽으로 올라감
-      floatingLabelBehavior:
-          FloatingLabelBehavior.always,
-
-      // 입력창 내부 여백
-      contentPadding: const EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 17,
-        bottom: 8,
-      ),
-
-      suffixIcon: suffixIcon,
-
-      // 기본 테두리
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(28),
-
-        borderSide: const BorderSide(
-          color: Color(0xFFD0D0D0),
-          width: 1,
-        ),
-      ),
-
-      // 입력하지 않았을 때
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(28),
-
-        borderSide: const BorderSide(
-          color: Color(0xFFD0D0D0),
-          width: 1,
-        ),
-      ),
-
-      // 입력 중일 때
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(28),
-
-        borderSide: const BorderSide(
-          color: Color(0xFF555555),
-          width: 1,
-        ),
-      ),
-    );
+    super.dispose();
   }
 
   // ============================================================
@@ -187,6 +177,15 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isFilled = _idController.text.trim().isNotEmpty &&
+        _passwordController.text.trim().isNotEmpty;
+
+    final idActive =
+        _idFocusNode.hasFocus || _idController.text.isNotEmpty;
+
+    final passwordActive = _passwordFocusNode.hasFocus ||
+        _passwordController.text.isNotEmpty;
+
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -203,24 +202,23 @@ class _SignupPageState extends State<SignupPage> {
               child: Stack(
                 children: [
 
-                  // 뒤로가기
                   Positioned(
                     left: 16,
-                    top: 14,
+                    top: 16,
                     child: GestureDetector(
                       onTap: () {
                         Navigator.pop(context);
                       },
 
-                      child: const Icon(
-                        Icons.arrow_back_ios_new,
-                        color: Colors.black,
-                        size: 19,
-                      ),
+                      child: 
+                        Image.asset(
+                          'assets/images/back_arrow.png',
+                          width: 22.35,
+                          height: 19.3,
+                        )
                     ),
                   ),
 
-                  // 회원가입
                   const Positioned(
                     left: 0,
                     right: 0,
@@ -230,7 +228,7 @@ class _SignupPageState extends State<SignupPage> {
                         '회원가입',
                         style: TextStyle(
                           color: Colors.black,
-                          fontSize: 16,
+                          fontSize: 20,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -240,12 +238,8 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
 
-            // ==================================================
-            // 상단 ↔ 제목
-            // ==================================================
-
             const SizedBox(
-              height: 70,
+              height: 59,
             ),
 
             // ==================================================
@@ -258,16 +252,12 @@ class _SignupPageState extends State<SignupPage> {
                 '아이디와 비밀번호를\n만들어주세요',
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 20,
+                  fontSize: 27.21,
                   fontWeight: FontWeight.w700,
                   height: 1.2,
                 ),
               ),
             ),
-
-            // ==================================================
-            // 제목 ↔ 아이디
-            // ==================================================
 
             const SizedBox(
               height: 25,
@@ -275,215 +265,277 @@ class _SignupPageState extends State<SignupPage> {
 
             // ==================================================
             // 아이디
-            // 338 × 55
             // ==================================================
 
-            SizedBox(
-              width: 338,
-              height: 55,
-              child: TextField(
-                controller: _emailController,
+            Center(
+              child: Container(
+                width: 338,
+                height: 60,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: idActive
+                        ? Colors.black
+                        : const Color(0xFFC5C5C5),
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Stack(
+                  children: [
 
-                keyboardType:
-                    TextInputType.emailAddress,
+                    // 실제 입력 필드
+                    Positioned.fill(
+                      child: TextField(
+                        controller: _idController,
+                        focusNode: _idFocusNode,
+                        onChanged: (_) {
+                          setState(() {});
+                        },
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          isCollapsed: true,
+                          contentPadding: EdgeInsets.only(
+                            left: 19,
+                            right: 46,
+                            top: 28,
+                            bottom: 10,
+                          ),
+                        ),
+                      ),
+                    ),
 
-                onChanged: (_) {
-                  setState(() {});
-                },
+                    // 힌트 → 라벨로 움직이는 텍스트
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 150),
+                      curve: Curves.easeOut,
+                      left: 19,
+                      top: idActive ? 9.31 : 19,
+                      child: IgnorePointer(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 150),
+                          style: TextStyle(
+                            fontSize: idActive ? 12 : 18,
+                            fontWeight: FontWeight.w500,
+                            color: idActive
+                                ? Colors.black
+                                : const Color(0xFFC5C5C5),
+                          ),
+                          child: const Text('아이디'),
+                        ),
+                      ),
+                    ),
 
-                decoration: _inputDecoration(
-                  label: '아이디',
-                  hint: '아이디 입력',
+                    // 입력 내용 전체 삭제 (X)
+                    if (_idController.text.isNotEmpty)
+                      Positioned(
+                        right: 18,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              _idController.clear();
 
-                  suffixIcon:
-                      _emailController.text.isNotEmpty
-                          ? IconButton(
-                              onPressed: () {
-                                _emailController.clear();
-
-                                setState(() {});
-                              },
-
-                              icon: const Icon(
-                                Icons.cancel,
-                                size: 15,
-                                color: Color(0xFF888888),
-                              ),
-                            )
-                          : null,
+                              setState(() {});
+                            },
+                            child: const Icon(
+                              Icons.cancel,
+                              size: 18,
+                              color: Color(0xFF888888),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
 
-            // ==================================================
-            // 아이디 ↔ 비밀번호
-            // ==================================================
-
             const SizedBox(
-              height: 10,
+              height: 18,
             ),
 
             // ==================================================
             // 비밀번호
-            // 338 × 55
             // ==================================================
 
-            SizedBox(
-              width: 338,
-              height: 55,
-              child: TextField(
-                controller:
-                    _passwordController,
+            Center(
+              child: Container(
+                width: 338,
+                height: 60,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: passwordActive
+                        ? Colors.black
+                        : const Color(0xFFC5C5C5),
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Stack(
+                  children: [
 
-                obscureText:
-                    _obscurePassword,
-
-                onChanged: (_) {
-                  setState(() {});
-                },
-
-                decoration: _inputDecoration(
-                  label: '비밀번호',
-                  hint: '비밀번호 입력',
-
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-
-                      // 비밀번호 보기
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword =
-                                !_obscurePassword;
-                          });
+                    // 실제 입력 필드
+                    Positioned.fill(
+                      child: TextField(
+                        controller: _passwordController,
+                        focusNode: _passwordFocusNode,
+                        obscureText: _obscurePassword,
+                        onChanged: (_) {
+                          setState(() {});
                         },
-
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-
-                          size: 17,
-
-                          color:
-                              const Color(0xFFBDBDBD),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
                         ),
-                      ),
-
-                      // 입력 내용 삭제
-                      if (_passwordController
-                          .text
-                          .isNotEmpty)
-                        IconButton(
-                          onPressed: () {
-                            _passwordController.clear();
-
-                            setState(() {});
-                          },
-
-                          icon: const Icon(
-                            Icons.cancel,
-                            size: 15,
-                            color: Color(0xFF888888),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          isCollapsed: true,
+                          contentPadding: EdgeInsets.only(
+                            left: 19,
+                            right: 76,
+                            top: 28,
+                            bottom: 10,
                           ),
                         ),
+                      ),
+                    ),
 
-                      const SizedBox(
-                        width: 4,
+                    // 힌트 → 라벨로 움직이는 텍스트
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 150),
+                      curve: Curves.easeOut,
+                      left: 19,
+                      top: passwordActive ? 9.31 : 19,
+                      child: IgnorePointer(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 150),
+                          style: TextStyle(
+                            fontSize: passwordActive ? 12 : 18,
+                            fontWeight: FontWeight.w500,
+                            color: passwordActive
+                                ? Colors.black
+                                : const Color(0xFFC5C5C5),
+                          ),
+                          child: const Text('비밀번호'),
+                        ),
+                      ),
+                    ),
+
+                    // 비밀번호 값이 있을 때만: 눈 아이콘 + X 아이콘
+                    if (_passwordController.text.isNotEmpty) ...[
+
+                      // 입력 내용 전체 삭제 (X) — 오른쪽 끝에서 18px
+                      Positioned(
+                        right: 18,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              _passwordController.clear();
+
+                              setState(() {});
+                            },
+                            child: const Icon(
+                              Icons.cancel,
+                              size: 18,
+                              color: Color(0xFF888888),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // 비밀번호 보기/숨기기 — X 아이콘에서 13px 더 왼쪽
+                      Positioned(
+                        right: 18 + 18 + 13,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                            child: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              size: 20,
+                              color: const Color(0xFFBDBDBD),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ),
 
-            // ==================================================
-            // 비밀번호 ↔ 확인 버튼
-            // ==================================================
-
             const SizedBox(
-              height: 188,
+              height: 236,
             ),
 
             // ==================================================
             // 확인 버튼
-            // 338 × 44
             // ==================================================
 
-            SizedBox(
-              width: 338,
-              height: 44,
-              child: ElevatedButton(
-                onPressed:
-                    _isLoading
-                        ? null
-                        : _signup,
+            Center(
+              child: SizedBox(
+                width: 338,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _signup,
 
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      _emailController
-                                  .text
-                                  .isNotEmpty &&
-                              _passwordController
-                                  .text
-                                  .isNotEmpty
-                          ? const Color(0xFFEAF8CB)
-                          : const Color(0xFFD9D9D9),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isLoading
+                        ? const Color(0xFFD9D9D9)
+                        : isFilled
+                            ? const Color(0xFFEAF8CB)
+                            : const Color(0xFFD9D9D9),
 
-                  disabledBackgroundColor:
-                      const Color(0xFFD9D9D9),
+                    foregroundColor: Colors.black,
 
-                  foregroundColor: Colors.black,
+                    elevation: 0,
 
-                  disabledForegroundColor:
-                      Colors.black,
+                    padding: EdgeInsets.zero,
 
-                  elevation: 0,
-
-                  padding: EdgeInsets.zero,
-
-                  shape:
-                      RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(24),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
                   ),
-                ),
 
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child:
-                            CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.black,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.black,
+                          ),
+                        )
+                      : const Text(
+                          '확인',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
                         ),
-                      )
-                    : const Text(
-                        '확인',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black,
-                        ),
-                      ),
+                ),
               ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  // ============================================================
-  // 종료
-  // ============================================================
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-
-    super.dispose();
   }
 }
