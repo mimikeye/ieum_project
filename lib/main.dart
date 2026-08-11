@@ -4,28 +4,32 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'login_page.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const MyApp());
+  runApp(const IeumApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class IeumApp extends StatelessWidget {
+  const IeumApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'IEUM',
+
+      title: '이음',
+
       theme: ThemeData(
-        fontFamily: 'Pretendard',
         scaffoldBackgroundColor: Colors.white,
+        useMaterial3: false,
+        fontFamily: 'Pretendard',
       ),
+
       home: const LoginPage(),
     );
   }
