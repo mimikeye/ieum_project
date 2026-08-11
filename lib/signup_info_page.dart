@@ -65,7 +65,7 @@ class _SignupInfoPageState extends State<SignupInfoPage> {
             SizedBox(
               height: 64,
               child: Stack(
-                alignment: Alignment.center,
+                alignment: Alignment.topLeft,
                 children: [
                   Positioned(
                     left: 36,
@@ -85,7 +85,7 @@ class _SignupInfoPageState extends State<SignupInfoPage> {
                     '회원가입',
                     style: TextStyle(
                       fontFamily: 'Pretendard',
-                      fontSize: 14,
+                      fontSize: 20,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF000000),
                     ),

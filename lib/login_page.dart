@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'signup_page.dart';
 import 'signup_info_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -145,11 +144,11 @@ class _LoginPageState extends State<LoginPage> {
   // 회원가입
   // ==========================================
 
-  void _signup() {
+  void _signupInfo() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const SignupPage(),
+        builder: (context) => const SignupInfoPage(),
       ),
     );
   }
@@ -723,7 +722,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
 
                     GestureDetector(
-                      onTap: _signup,
+                      onTap: _signupInfo,
 
                       child: const Text(
                         '회원가입',
