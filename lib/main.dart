@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:ieum_project/calender_main.dart';
+import 'package:ieum_project/pray_time.dart';
 
 import 'firebase_options.dart';
 import 'login_page.dart';
@@ -30,7 +32,9 @@ class IeumApp extends StatelessWidget {
         fontFamily: 'Pretendard',
       ),
 
-      home: const LoginPage(),
+      home: const PrayerTimerPage(
+        uid: 'test_uid',
+      ),
     );
   }
 }
