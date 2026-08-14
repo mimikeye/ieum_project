@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
 import 'dart:math';
 import 'pray_time.dart';
+import 'user_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -59,6 +60,21 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    // 현재 로그인한 사용자의 username 가져오기
+    final username = await UserService.getCurrentUsername();
+
+    if (username == null || username.isEmpty) {
+      debugPrint('사용자 아이디를 찾을 수 없습니다.');
+
+      if (mounted) {
+        setState(() {
+          _isLoadingWeeklyActivity = false;
+        });
+      }
+
+      return;
+    }
+
     final now = DateTime.now();
 
     // 이번 주 일요일 구하기
@@ -83,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         final doc = await FirebaseFirestore.instance
             .collection('dailyActivities')
-            .doc(user.uid)
+            .doc(username)
             .collection('dates')
             .doc(dateString)
             .get();
@@ -92,16 +108,21 @@ class _HomeScreenState extends State<HomeScreen> {
           final data = doc.data();
 
           final bool prayed = data?['prayed'] == true;
+
           final int prayerTime =
               (data?['prayerTime'] ?? 0) as int;
 
           // 기도했거나 기도시간이 1초 이상이면 활동한 날
-          activity[dateString] = prayed || prayerTime > 0;
+          activity[dateString] =
+              prayed || prayerTime > 0;
         } else {
           activity[dateString] = false;
         }
       } catch (e) {
-        debugPrint('기도 활동 데이터 불러오기 실패: $e');
+        debugPrint(
+          '기도 활동 데이터 불러오기 실패: $e',
+        );
+
         activity[dateString] = false;
       }
     }
