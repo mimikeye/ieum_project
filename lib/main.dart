@@ -135,9 +135,7 @@ class _RootScreenState extends State<RootScreen> {
           // 0. 홈
           // =================================================
 
-          HomeScreen(
-            onNavigateToPrayer: _goToPrayerTab,
-          ),
+          const HomeScreen(),
 
           // =================================================
           // 1. 캘린더
@@ -164,6 +162,9 @@ class _RootScreenState extends State<RootScreen> {
           // =================================================
 
           //const ProfileScreen(),
+          const Center(
+            child: Text('프로필 화면'),
+          ),
         ],
       ),
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'pray_time.dart';
 
 class PrayerScreen extends StatelessWidget {
   PrayerScreen({super.key});
@@ -122,7 +124,27 @@ class PrayerScreen extends StatelessWidget {
                           shape: const CircleBorder(),
                           child: InkWell(
                             customBorder: const CircleBorder(),
-                            onTap: () {},
+                            onTap: () {
+                              final user = FirebaseAuth.instance.currentUser;
+
+                              if (user == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('로그인 정보가 없습니다.'),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PrayerTimerPage(
+                                    uid: user.uid,
+                                  ),
+                                ),
+                              );
+                            },
                             child: Ink.image(
                               image: const AssetImage(
                                 'assets/images/pray_start.png',
@@ -161,13 +183,14 @@ class PrayerScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: const [
                             Text(
                               '새로운 기도문을 작성해보세요',
                               style: TextStyle(
                                 fontSize: 15,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                                 fontFamily: 'Pretendard',
                               ),
                             ),

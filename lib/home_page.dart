@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
 import 'dart:math';
+import 'pray_time.dart';
 
 class HomeScreen extends StatefulWidget {
-  final VoidCallback onNavigateToPrayer; // 화면 전환 함수를 받아옵니다.
-
-  const HomeScreen({super.key, required this.onNavigateToPrayer});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -14,6 +15,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final Color _primaryLightGreen = const Color.fromRGBO(234, 248, 203, 1);
   final Color _greyBackground = const Color.fromRGBO(242, 242, 247, 1);
+
+  String _nickname = '소세기';
 
   final List<Map<String, String>> _verses = [
     {'text': '아무 것도 염려하지 말고 다만 모든 일에 기도와 간구로, 너희 구할 것을 감사함으로 하나님께 아뢰라', 'ref': '빌 4:6'},
@@ -35,6 +38,30 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _todayVerse = _verses[Random().nextInt(_verses.length)];
+    _loadUserNickname();
+  }
+
+  Future<void> _loadUserNickname() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    if (!doc.exists) return;
+
+    final data = doc.data();
+
+    if (data != null && data['nickname'] != null) {
+      if (!mounted) return;
+
+      setState(() {
+        _nickname = data['nickname'] as String;
+      });
+    }
   }
 
   @override
@@ -52,8 +79,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 30),
-                      const Text(
-                        '소세기님,\n좋은 아침입니다',
+                      Text(
+                        '$_nickname님,\n좋은 아침입니다',
                         style: TextStyle(fontSize: 32, fontFamily: 'Pretendard', fontWeight: FontWeight.w500, height: 1.3, color: Colors.black),
                       ),
                       const SizedBox(height: 14.5),
@@ -106,8 +133,32 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 35),
 
               // 👈 여기서 버튼 클릭 시 widget.onNavigateToPrayer를 실행하여 탭을 넘깁니다!
-              _buildSectionButton('오늘의 이음 기도', '시작', widget.onNavigateToPrayer),
-              
+              _buildSectionButton(
+                '오늘의 이음 기도 시간',
+                '시작',
+                () {
+                  final user = FirebaseAuth.instance.currentUser;
+
+                  if (user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('로그인 정보가 없습니다.'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PrayerTimerPage(
+                        uid: user.uid,
+                      ),
+                    ),
+                  );
+                },
+              ),
+
               const SizedBox(height: 23.3),
               _buildSectionButton('기도문 작성', '작성하기', () {}), // 이건 아직 동작 없음
               const SizedBox(height: 40),
