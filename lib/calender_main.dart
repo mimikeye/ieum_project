@@ -42,6 +42,131 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   // ==========================================
+  // 연도 / 월 선택창
+  // ==========================================
+
+  void _showMonthYearPicker() {
+    int selectedYear = _displayedMonth.year;
+    int selectedMonth = _displayedMonth.month;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              title: const Text(
+                '날짜 선택',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 연도 선택
+                  DropdownButton<int>(
+                    borderRadius: BorderRadius.circular(10),
+                    value: selectedYear,
+                    focusColor: Color(0xFFCBCBCB),
+                    isExpanded: true,
+                    underline: const SizedBox(),
+                    items: List.generate(
+                      7,
+                      (index) => DateTime.now().year - 3 + index,
+                    ).map((year) {
+                      return DropdownMenuItem<int>(
+                        value: year,
+                        child: Text(
+                          '$year년',
+                          style: const TextStyle(
+                            fontSize: 18,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+
+                      setDialogState(() {
+                        selectedYear = value;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 월 선택
+                  DropdownButton<int>(
+                    borderRadius: BorderRadius.circular(12),
+                    focusColor: Color(0xFFCBCBCB),
+                    value: selectedMonth,
+                    isExpanded: true,
+                    underline: const SizedBox(),
+                    items: List.generate(
+                      12,
+                      (index) => index + 1,
+                    ).map((month) {
+                      return DropdownMenuItem<int>(
+                        value: month,
+                        child: Text(
+                          '$month월',
+                          style: const TextStyle(
+                            fontSize: 18,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+
+                      setDialogState(() {
+                        selectedMonth = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFCBCBCB)
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFB3CA83)
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _displayedMonth = DateTime(
+                        selectedYear,
+                        selectedMonth,
+                      );
+                    });
+
+                    Navigator.pop(context);
+                  },
+                  child: const Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ==========================================
   // 날짜 그리드용 데이터 계산
   // ==========================================
 
@@ -94,39 +219,86 @@ class _CalendarPageState extends State<CalendarPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '${_displayedMonth.month}',
-                    style: const TextStyle(
-                      fontSize: 100,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                      height: 1.0,
+                  // ====================================
+                  // 왼쪽: 현재 월
+                  // ====================================
+                  Transform.translate(
+                    offset: const Offset(0, 12),
+                    child: Text(
+                      '${_displayedMonth.month}',
+                      style: const TextStyle(
+                        fontSize: 100,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black,
+                        height: 1.0,
+                      ),
                     ),
                   ),
+
+                  // ====================================
+                  // 오른쪽: 연도 + 아래 화살표 + 이전/다음
+                  // ====================================
                   Padding(
                     padding: const EdgeInsets.only(top: 70),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        // 연도 + 아래 화살표
+                        GestureDetector(
+                          onTap: _showMonthYearPicker,
+                          child: Row(
+                            children: [
+                              Text(
+                                '${_displayedMonth.year}',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.black,
+                                ),
+                              ),
+
+                              const SizedBox(width: 3),
+
+                              const Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 20,
+                                color: Colors.black,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        // 이전 달
                         GestureDetector(
                           onTap: _goToPreviousMonth,
                           child: const Padding(
                             padding: EdgeInsets.all(6),
                             child: Image(
-                              image: AssetImage('assets/images/calender_last.png'),
-                              width: 12,
-                              height: 12,
+                              image: AssetImage(
+                                'assets/images/calender_last.png',
+                              ),
+                              width: 20,
+                              height: 20,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+
+                        // 이전 / 다음 화살표 사이 6px
+                        const SizedBox(width: 20),
+
+                        // 다음 달
                         GestureDetector(
                           onTap: _goToNextMonth,
                           child: const Padding(
                             padding: EdgeInsets.all(6),
                             child: Image(
-                              image: AssetImage('assets/images/calender_next.png'),
-                              width: 12,
-                              height: 12,
+                              image: AssetImage(
+                                'assets/images/calender_next.png',
+                              ),
+                              width: 20,
+                              height: 20,
                             ),
                           ),
                         ),
