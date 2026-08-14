@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'prayer_session.dart';
 import 'equalizer_icon.dart';
+import 'user_service.dart';
 
 class PrayerTimerPage extends StatefulWidget {
   const PrayerTimerPage({
@@ -227,23 +228,18 @@ class _PrayerTimerPageState extends State<PrayerTimerPage> {
   if (!mounted) return;
 
   if (shouldSave) {
-    // 저장 후 시작 화면으로 초기화
-    await _savePrayerSession();
+  // 기도시간 저장
+  await _savePrayerSession();
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    setState(() {
-      _isRunning = false;
-      _isPaused = false;
-      _isMusicMuted = false;
-      _elapsedSeconds = 0;
-      _startedAt = null;
-      _showTodayRecords = false;
-    });
+    // 홈 화면으로 돌아가면서
+    // "기도 기록이 저장되었다"는 의미로 true 전달
+    Navigator.pop(context, true);
   } else {
-    // 취소 -> 같은 시간에서 이어서 재개
-    await _resumeTimer();
-  }
+      // 취소 -> 같은 시간에서 이어서 재개
+      await _resumeTimer();
+    }
 }
 
   // =========================
@@ -251,11 +247,19 @@ class _PrayerTimerPageState extends State<PrayerTimerPage> {
   // =========================
 
   Future<void> _savePrayerSession() async {
+    final username = await UserService.getCurrentUsername();
+
+    if (username == null || username.isEmpty) {
+      debugPrint('사용자 아이디를 찾을 수 없습니다.');
+      return;
+    }
+
     if (_startedAt == null) return;
 
     try {
       await _sessionService.savePrayerSession(
         uid: widget.uid,
+        username: username,
         startedAt: _startedAt!,
         durationSeconds: _elapsedSeconds,
       );
@@ -349,6 +353,13 @@ class _PrayerTimerPageState extends State<PrayerTimerPage> {
   // =========================
 
   Future<void> _loadTodayRecords() async {
+    final username = await UserService.getCurrentUsername();
+
+    if (username == null || username.isEmpty) {
+      debugPrint('사용자 아이디를 찾을 수 없습니다.');
+      return;
+    }
+
     final now = DateTime.now();
 
     final date =
@@ -358,7 +369,7 @@ class _PrayerTimerPageState extends State<PrayerTimerPage> {
 
     final records =
         await _sessionService.getPrayerSessions(
-      uid: widget.uid,
+      username: username,
       date: date,
     );
 

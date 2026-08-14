@@ -17,6 +17,7 @@ class PrayerSessionService {
   /// 2. dailyActivities/{uid}/dates/{yyyy-MM-dd}
   Future<void> savePrayerSession({
     required String uid,
+    required String username,
     required DateTime startedAt,
     required int durationSeconds,
   }) async {
@@ -25,14 +26,14 @@ class PrayerSessionService {
     // 새로운 기도 세션의 문서 ID
     final sessionRef = _firestore
         .collection('prayerSessions')
-        .doc(uid)
+        .doc(username)
         .collection('sessions')
         .doc();
 
     // 해당 날짜의 활동 문서
     final activityRef = _firestore
         .collection('dailyActivities')
-        .doc(uid)
+        .doc(username)
         .collection('dates')
         .doc(date);
 
@@ -86,12 +87,12 @@ class PrayerSessionService {
   /// 특정 날짜의 기도 기록 가져오기
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       getPrayerSessions({
-    required String uid,
+    required String username,
     required String date,
   }) async {
     final snapshot = await _firestore
         .collection('prayerSessions')
-        .doc(uid)
+        .doc(username)
         .collection('sessions')
         .where('date', isEqualTo: date)
         .orderBy('startedAt', descending: true)
@@ -102,11 +103,11 @@ class PrayerSessionService {
 
   /// 특정 날짜의 총 기도 시간
   Future<int> getTotalPrayerSeconds({
-    required String uid,
+    required String username,
     required String date,
   }) async {
     final sessions = await getPrayerSessions(
-      uid: uid,
+      username: username,
       date: date,
     );
 

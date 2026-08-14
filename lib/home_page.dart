@@ -209,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildSectionButton(
                 '오늘의 이음 기도 시간',
                 '시작',
-                () {
+                () async {
                   final user = FirebaseAuth.instance.currentUser;
 
                   if (user == null) {
@@ -221,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return;
                   }
 
-                  Navigator.push(
+                  final result = await Navigator.push<bool>(
                     context,
                     MaterialPageRoute(
                       builder: (context) => PrayerTimerPage(
@@ -229,6 +229,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   );
+
+                  if (result == true && mounted) {
+                    await _loadWeeklyActivity();
+                  }
                 },
               ),
 
