@@ -13,6 +13,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  Map<String, bool> _weeklyActivity = {};
+  bool _isLoadingWeeklyActivity = true;
+
   final Color _primaryLightGreen = const Color.fromRGBO(234, 248, 203, 1);
   final Color _greyBackground = const Color.fromRGBO(242, 242, 247, 1);
 
@@ -39,6 +43,75 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _todayVerse = _verses[Random().nextInt(_verses.length)];
     _loadUserNickname();
+    _loadWeeklyActivity();
+  }
+
+  Future<void> _loadWeeklyActivity() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    // 로그인한 사용자가 없으면 종료
+    if (user == null) {
+      if (mounted) {
+        setState(() {
+          _isLoadingWeeklyActivity = false;
+        });
+      }
+      return;
+    }
+
+    final now = DateTime.now();
+
+    // 이번 주 일요일 구하기
+    final sunday = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(
+      Duration(days: now.weekday % 7),
+    );
+
+    final Map<String, bool> activity = {};
+
+    for (int i = 0; i < 7; i++) {
+      final date = sunday.add(Duration(days: i));
+
+      final dateString =
+          '${date.year.toString().padLeft(4, '0')}-'
+          '${date.month.toString().padLeft(2, '0')}-'
+          '${date.day.toString().padLeft(2, '0')}';
+
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('dailyActivities')
+            .doc(user.uid)
+            .collection('dates')
+            .doc(dateString)
+            .get();
+
+        if (doc.exists) {
+          final data = doc.data();
+
+          final bool prayed = data?['prayed'] == true;
+          final int prayerTime =
+              (data?['prayerTime'] ?? 0) as int;
+
+          // 기도했거나 기도시간이 1초 이상이면 활동한 날
+          activity[dateString] = prayed || prayerTime > 0;
+        } else {
+          activity[dateString] = false;
+        }
+      } catch (e) {
+        debugPrint('기도 활동 데이터 불러오기 실패: $e');
+        activity[dateString] = false;
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _weeklyActivity = activity;
+      _isLoadingWeeklyActivity = false;
+    });
   }
 
   Future<void> _loadUserNickname() async {
@@ -121,13 +194,13 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildDayStatus('Sun', false, false),
-                  _buildDayStatus('Mon', false, false),
-                  _buildDayStatus('Tue', true, false),
-                  _buildDayStatus('Wed', false, false),
-                  _buildDayStatus('Thu', false, false),
-                  _buildDayStatus('Fri', true, true),
-                  _buildDayStatus('Sat', false, false),
+                  _buildDayStatus('Sun', 0),
+                  _buildDayStatus('Mon', 1),
+                  _buildDayStatus('Tue', 2),
+                  _buildDayStatus('Wed', 3),
+                  _buildDayStatus('Thu', 4),
+                  _buildDayStatus('Fri', 5),
+                  _buildDayStatus('Sat', 6),
                 ],
               ),
               const SizedBox(height: 35),
@@ -189,30 +262,74 @@ class _HomeScreenState extends State<HomeScreen> {
     ); // Scaffold 없이 내용물만 반환합니다.
   }
 
-  Widget _buildDayStatus(String day, bool isAttended, bool isToday) {
+  Widget _buildDayStatus(String day, int dayIndex) {
+    final now = DateTime.now();
+
+    // 이번 주 일요일
+    final sunday = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(
+      Duration(days: now.weekday % 7),
+    );
+
+    // 해당 요일의 실제 날짜
+    final date = sunday.add(Duration(days: dayIndex));
+
+    final dateString =
+        '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+
+    // 해당 날짜에 활동했는지
+    final bool isAttended = _weeklyActivity[dateString] ?? false;
+
+    // 오늘인지 확인
+    final bool isToday =
+        date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+
     Widget circleWidget = Container(
       width: isToday ? 48 : 42,
       height: isToday ? 48 : 42,
       decoration: BoxDecoration(
-        color: isAttended ? _primaryLightGreen : _greyBackground,
+        color: isAttended
+            ? _primaryLightGreen
+            : _greyBackground,
         shape: BoxShape.circle,
-        border: isToday ? Border.all(color: const Color.fromRGBO(72, 95, 63, 1), width: 1.5) : null,
+        border: isToday
+            ? Border.all(
+                color: const Color.fromRGBO(72, 95, 63, 1),
+                width: 1.5,
+              )
+            : null,
       ),
     );
+
+    // 오늘이 아닌 날짜는 기존 디자인대로 살짝 흐리게
     if (!isToday) {
       circleWidget = ImageFiltered(
-        imageFilter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
+        imageFilter: ImageFilter.blur(
+          sigmaX: 1.5,
+          sigmaY: 1.5,
+        ),
         child: circleWidget,
       );
     }
+
     return Column(
       children: [
         Text(
           day,
           style: TextStyle(
             fontSize: 12,
-            fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-            color: isToday ? const Color.fromRGBO(72, 95, 63, 1) : Colors.grey.shade600,
+            fontWeight:
+                isToday ? FontWeight.bold : FontWeight.normal,
+            color: isToday
+                ? const Color.fromRGBO(72, 95, 63, 1)
+                : Colors.grey.shade600,
           ),
         ),
         const SizedBox(height: 8),
