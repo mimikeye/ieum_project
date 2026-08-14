@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      icon: Image.asset('assets/images/Union.png', width: 19, height: 20),
+                      icon: Image.asset('assets/images/alert.png', width: 19, height: 20),
                       onPressed: () {},
                     ),
                   ),

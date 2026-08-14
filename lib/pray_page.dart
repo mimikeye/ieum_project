@@ -81,7 +81,7 @@ class PrayerScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
                   image: const DecorationImage(
-                    image: AssetImage('assets/images/기도하기 박스.png'),
+                    image: AssetImage('assets/images/pray_start_back.png'),
                     fit: BoxFit.fill,
                   ),
                 ),
@@ -125,7 +125,7 @@ class PrayerScreen extends StatelessWidget {
                             onTap: () {},
                             child: Ink.image(
                               image: const AssetImage(
-                                'assets/images/기도 시작하기 버튼.png',
+                                'assets/images/pray_start.png',
                               ),
                               width: 103,
                               height: 103,
@@ -181,7 +181,7 @@ class PrayerScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        Image.asset('assets/images/화살표.png', width: 9, height: 15),
+                        Image.asset('assets/images/right_arrow.png', width: 9, height: 15),
                       ],
                     ),
                   ),
