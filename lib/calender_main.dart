@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
@@ -17,7 +20,67 @@ class _CalendarPageState extends State<CalendarPage> {
     DateTime.now().month,
   );
 
+  // ==========================================
+  // 기도/활동 기록이 있는 날짜
+  // ==========================================
+
+  Set<String> _activityDates = {};
+
   // 💡 main.dart에서 통합 관리하므로 _selectedIndex 와 _primaryDarkGreen 관련 변수는 삭제했습니다.
+
+
+  // ==========================================
+  // Firestore 활동 날짜 가져오기
+  // ==========================================
+
+  Future<void> _loadActivityDates() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return;
+
+    // users/{uid}에서 username 가져오기
+    final userSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    final userData = userSnapshot.data();
+
+    if (userData == null) return;
+
+    final username = userData['username'] as String?;
+
+    if (username == null || username.isEmpty) return;
+
+    // dailyActivities/{username}/dates 가져오기
+    final snapshot = await FirebaseFirestore.instance
+        .collection('dailyActivities')
+        .doc(username)
+        .collection('dates')
+        .get();
+
+    final activityDates = <String>{};
+
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+
+      if (data['prayed'] == true) {
+        activityDates.add(doc.id);
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _activityDates = activityDates;
+    });
+  }
+
+  @override
+    void initState() {
+      super.initState();
+      _loadActivityDates();
+    }
 
   // ==========================================
   // 월 이동
@@ -350,13 +413,44 @@ class _CalendarPageState extends State<CalendarPage> {
                     return const SizedBox.shrink();
                   }
 
+                  final today = DateTime.now();
+
+                  final isToday =
+                      _displayedMonth.year == today.year &&
+                      _displayedMonth.month == today.month &&
+                      day == today.day;
+
+                  final dateKey =
+                      '${_displayedMonth.year.toString().padLeft(4, '0')}-'
+                      '${_displayedMonth.month.toString().padLeft(2, '0')}-'
+                      '${day.toString().padLeft(2, '0')}';
+
+                  final hasActivity = _activityDates.contains(dateKey);
+
                   return Center(
-                    child: Text(
-                      '$day',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black,
+                    child: Container(
+                      width: 35,
+                      height: 35,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: hasActivity
+                            ? const Color(0xFFEAF8CB)
+                            : Colors.transparent,
+                        border: isToday
+                            ? Border.all(
+                                color: Colors.black,
+                                width: 1,
+                              )
+                            : null,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$day',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   );
