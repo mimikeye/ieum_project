@@ -6,13 +6,97 @@ import 'prayer_note_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'prayer_note_list.dart';
 import 'prayer_note_detail_page.dart';
+import 'user_service.dart';
 
-class PrayerScreen extends StatelessWidget {
+class PrayerScreen extends StatefulWidget {
   PrayerScreen({super.key});
 
   final Color _primaryLightGreen = const Color.fromRGBO(234, 248, 203, 1);
   final Color _primaryDarkGreen = const Color.fromRGBO(72, 95, 63, 1);
   final Color _tagTextColor = const Color.fromRGBO(166, 166, 166, 1);
+
+  @override
+  State<PrayerScreen> createState() => _PrayerScreenState();
+}
+
+class _PrayerScreenState extends State<PrayerScreen> {
+
+  Future<void> _loadPrayerStreak() async {
+    final username = await UserService.getCurrentUsername();
+
+    if (username == null || username.isEmpty) {
+      return;
+    }
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('dailyActivities')
+        .doc(username)
+        .collection('dates')
+        .get();
+
+    final activityDates = <String>{};
+
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+
+      final prayed = data['prayed'] == true;
+      final wrotePrayer = data['wrotePrayer'] == true;
+
+      // 기도 시간 측정 또는 기도문 작성 중
+      // 하나라도 했다면 활동한 날
+      if (prayed || wrotePrayer) {
+        activityDates.add(doc.id);
+      }
+    }
+
+    DateTime today = DateTime.now();
+
+    String makeDateString(DateTime date) {
+      return '${date.year.toString().padLeft(4, '0')}-'
+          '${date.month.toString().padLeft(2, '0')}-'
+          '${date.day.toString().padLeft(2, '0')}';
+    }
+
+    final todayString = makeDateString(today);
+
+    int streak = 0;
+
+    // 오늘 활동하지 않았다면 어제부터 연속일을 계산
+    if (!activityDates.contains(todayString)) {
+      today = today.subtract(const Duration(days: 1));
+    }
+
+    DateTime checkDate = today;
+
+    while (true) {
+      final dateString = makeDateString(checkDate);
+
+      if (!activityDates.contains(dateString)) {
+        break;
+      }
+
+      streak++;
+
+      checkDate = checkDate.subtract(
+        const Duration(days: 1),
+      );
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _streakDays = streak;
+    });
+  }
+
+  int _streakDays = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadPrayerStreak();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,12 +129,12 @@ class PrayerScreen extends StatelessWidget {
                     TextSpan(
                       children: [
                         TextSpan(
-                          text: '3',
+                          text: '$_streakDays',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w600,
                             fontFamily: 'Pretendard',
-                            color: _primaryDarkGreen,
+                            color: widget._primaryDarkGreen,
                           ),
                         ),
                         const TextSpan(
@@ -189,7 +273,7 @@ class PrayerScreen extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: _primaryLightGreen, width: 1),
+                      border: Border.all(color: widget._primaryLightGreen, width: 1),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -477,7 +561,7 @@ class PrayerScreen extends StatelessWidget {
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                                 fontFamily: 'Pretendard',
-                                color: _tagTextColor,
+                                color: widget._tagTextColor,
                               ),
                             ),
                           ),

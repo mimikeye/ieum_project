@@ -211,7 +211,10 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
       }
 
       // ② 오늘 활동 기록
-      await _updateDailyActivity();
+      // 새 기도문을 작성한 경우에만 활동으로 기록
+      if (widget.noteId == null) {
+        await _updateDailyActivity();
+      }
 
       if (!mounted) return;
 
