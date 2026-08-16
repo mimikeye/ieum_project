@@ -115,6 +115,8 @@ class PrayerNoteService {
     required String title,
     required String content,
     required List<String> categories,
+    File? image,
+    bool removeImage = false,
   }) async {
     final username = await UserService.getCurrentUsername();
 
@@ -128,10 +130,57 @@ class PrayerNoteService {
         .collection('notes')
         .doc(noteId);
 
+    final storageRef = _storage
+        .ref()
+        .child('prayerImages')
+        .child(username)
+        .child(noteId)
+        .child('image.jpg');
+
+    // -----------------------------------------
+    // 1. 사진 처리
+    // -----------------------------------------
+
+    String? imageUrl;
+
+    if (image != null) {
+      // 새 사진을 선택한 경우
+      await storageRef.putFile(image);
+      imageUrl = await storageRef.getDownloadURL();
+    } else if (removeImage) {
+      // 기존 사진을 삭제한 경우
+      try {
+        await storageRef.delete();
+      } on FirebaseException catch (e) {
+        if (e.code != 'object-not-found') {
+          rethrow;
+        }
+      }
+
+      imageUrl = null;
+    } else {
+      // 사진을 건드리지 않은 경우
+      final currentDoc = await noteRef.get();
+
+      final currentData = currentDoc.data();
+
+      final currentImageUrls =
+          List<String>.from(currentData?['imageUrls'] ?? []);
+
+      if (currentImageUrls.isNotEmpty) {
+        imageUrl = currentImageUrls.first;
+      }
+    }
+
+    // -----------------------------------------
+    // 2. Firestore 업데이트
+    // -----------------------------------------
+
     await noteRef.update({
       'title': title.trim(),
       'content': content.trim(),
       'categories': categories,
+      'imageUrls': imageUrl == null ? [] : [imageUrl],
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }

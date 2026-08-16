@@ -35,6 +35,9 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
 
+  String? _existingImageUrl;
+  bool _removeExistingImage = false;
+
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   final Random _random = Random();
@@ -189,11 +192,15 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
       } else {
         // 기존 기도문 수정
         await PrayerNoteService.updatePrayerNote(
-          noteId: widget.noteId!,
-          title: _titleController.text,
-          content: _bodyController.text,
-          categories: _selectedCategories,
-        );
+        noteId: widget.noteId!,
+        title: _titleController.text,
+        content: _bodyController.text,
+        categories: _selectedCategories,
+        image: _selectedImage != null
+            ? File(_selectedImage!.path)
+            : null,
+        removeImage: _removeExistingImage,
+      );
 
         // 수정한 기존 문서의 ID
         savedNoteId = widget.noteId;
@@ -274,6 +281,15 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
           List<String>.from(
             widget.initialNote!['categories'] ?? [],
           );
+      
+      final List<String> imageUrls =
+          List<String>.from(
+            widget.initialNote!['imageUrls'] ?? [],
+          );
+
+      if (imageUrls.isNotEmpty) {
+        _existingImageUrl = imageUrls.first;
+      }
 
       _hasText =
           _titleController.text.trim().isNotEmpty ||
@@ -364,6 +380,10 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
     if (image != null) {
       setState(() {
         _selectedImage = image;
+
+        // 새 사진으로 교체했으므로 기존 사진은 삭제 처리
+        _existingImageUrl = null;
+        _removeExistingImage = true;
       });
     }
   }
@@ -506,9 +526,10 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
 
                         // 💡 [새로 추가된 부분] 사진이 차지할 높이와 본문이 늘어나야 할 최소 높이 계산
                         // 사진 200px + 아래 여백 20px = 220px
-                        final double imageAreaHeight = _selectedImage != null
-                            ? 220.0
-                            : 0.0;
+                        final double imageAreaHeight =
+                            (_selectedImage != null || _existingImageUrl != null)
+                                ? 220.0
+                                : 0.0;
                         final double minBodyHeight =
                             areaHeight -
                             currentTitleHeight -
@@ -719,9 +740,10 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
                                                 right: 20,
                                                 top: 5.0,
                                                 // 💡 핵심: 사진이 있으면 여백 20, 없으면 터치 영역을 위해 300!
-                                                bottom: _selectedImage != null
-                                                    ? 20.0
-                                                    : 300.0,
+                                                bottom:
+                                                    (_selectedImage != null || _existingImageUrl != null)
+                                                        ? 20.0
+                                                        : 300.0,
                                               ),
                                             ),
                                             style: TextStyle(
@@ -734,8 +756,8 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
                                           ),
                                         ),
 
-                                        // 💡 4. 사진이 선택되었을 때만 보여주는 사진 미리보기 UI
-                                        if (_selectedImage != null)
+                                        // 4. 사진 미리보기
+                                        if (_selectedImage != null || _existingImageUrl != null)
                                           Padding(
                                             padding: const EdgeInsets.only(
                                               left: 20,
@@ -744,27 +766,32 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
                                             ),
                                             child: Stack(
                                               children: [
-                                                // 둥근 모서리 사진 배경
+                                                // 사진 배경
                                                 Container(
                                                   width: double.infinity,
-                                                  height: 200, // 사진의 높이
+                                                  height: 200,
                                                   decoration: BoxDecoration(
                                                     color: Colors.grey.shade200,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                    image: DecorationImage(
-                                                      image: FileImage(
-                                                        File(
-                                                          _selectedImage!.path,
-                                                        ),
-                                                      ),
-                                                      fit: BoxFit
-                                                          .cover, // 화면에 꽉 차게 비율 조절
-                                                    ),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: ClipRRect(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    child: _selectedImage != null
+                                                        ? Image.file(
+                                                            File(_selectedImage!.path),
+                                                            width: double.infinity,
+                                                            height: 200,
+                                                            fit: BoxFit.cover,
+                                                          )
+                                                        : Image.network(
+                                                            _existingImageUrl!,
+                                                            width: double.infinity,
+                                                            height: 200,
+                                                            fit: BoxFit.cover,
+                                                          ),
                                                   ),
                                                 ),
+
                                                 // 우측 상단 '-' 삭제 버튼
                                                 if (!_isSaved)
                                                   Positioned(
@@ -773,24 +800,28 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
                                                     child: GestureDetector(
                                                       onTap: () {
                                                         setState(() {
-                                                          _selectedImage = null;
+                                                          if (_selectedImage != null) {
+                                                            // 새로 선택한 사진 삭제
+                                                            _selectedImage = null;
+                                                          } else {
+                                                            // 기존 Firebase 사진 삭제
+                                                            _existingImageUrl = null;
+                                                            _removeExistingImage = true;
+                                                          }
                                                         });
                                                       },
                                                       child: Container(
                                                         width: 28,
                                                         height: 28,
-                                                        decoration:
-                                                            const BoxDecoration(
-                                                              color:
-                                                                  Color.fromRGBO(
-                                                                    153,
-                                                                    153,
-                                                                    153,
-                                                                    0.8,
-                                                                  ),
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                            ),
+                                                        decoration: const BoxDecoration(
+                                                          color: Color.fromRGBO(
+                                                            153,
+                                                            153,
+                                                            153,
+                                                            0.8,
+                                                          ),
+                                                          shape: BoxShape.circle,
+                                                        ),
                                                         child: const Icon(
                                                           Icons.remove,
                                                           color: Colors.white,
@@ -802,7 +833,8 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
                                               ],
                                             ),
                                           ),
-                                        if (_selectedImage != null)
+
+                                        if (_selectedImage != null || _existingImageUrl != null)
                                           const SizedBox(height: 100),
                                       ],
                                     ),
