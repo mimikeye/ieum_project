@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'dart:math';
 import 'pray_time.dart';
 import 'user_service.dart';
+import 'pray_write_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -258,7 +259,18 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               const SizedBox(height: 23.3),
-              _buildSectionButton('기도문 작성', '작성하기', () {}), // 이건 아직 동작 없음
+              _buildSectionButton(
+                '기도문 작성',
+                '작성하기',
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrayerWriteScreen(),
+                    ),
+                  );
+                },
+              ), // 이건 아직 동작 없음
               const SizedBox(height: 40),
 
               const Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'pray_time.dart';
+import 'pray_write_page.dart';
 
 class PrayerScreen extends StatelessWidget {
   PrayerScreen({super.key});
@@ -168,7 +169,14 @@ class PrayerScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PrayerWriteScreen(),
+                      ),
+                    );
+                  },
                   child: Container(
                     height: 67,
                     padding: const EdgeInsets.symmetric(
