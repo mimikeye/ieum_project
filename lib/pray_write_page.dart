@@ -3,6 +3,9 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'category_selection.dart'; // 카테고리 선택 시트 import
 import 'package:flutter/cupertino.dart';
+import 'prayer_note_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'user_service.dart';
 
 class PrayerWriteScreen extends StatefulWidget {
   const PrayerWriteScreen({super.key});
@@ -28,6 +31,37 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
   bool _isSaved = false;
   String _lastTitle = "";
   String _lastBody = "";
+
+  String _formatDate(DateTime dateTime) {
+    return '${dateTime.year.toString().padLeft(4, '0')}-'
+        '${dateTime.month.toString().padLeft(2, '0')}-'
+        '${dateTime.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _updateDailyActivity() async {
+    final username = await UserService.getCurrentUsername();
+
+    if (username == null) {
+      throw Exception('로그인한 사용자의 username을 찾을 수 없습니다.');
+    }
+
+    final today = DateTime.now();
+    final date = _formatDate(today);
+
+    final activityRef = FirebaseFirestore.instance
+        .collection('dailyActivities')
+        .doc(username)
+        .collection('dates')
+        .doc(date);
+
+    await activityRef.set(
+      {
+        'wrotePrayer': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
 
   Future<bool> _showConfirmDialog() async {
     final result = await showDialog<bool>(
@@ -104,34 +138,73 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
     });
   }
 
-  void _savePrayer() {
-    if (!_hasText || _isSaved) return; // 글이 없거나 이미 저장됐으면 무시
+  Future<void> _savePrayer() async {
+    if (!_hasText || _isSaved) return;
 
-    FocusScope.of(context).unfocus(); // 키보드 내리기
+    FocusScope.of(context).unfocus();
 
-    setState(() {
-      _isSaved = true; // 💡 저장 상태로 변경! (이때 아이콘이 바뀌고 삭제 버튼들이 사라짐)
-    });
+    try {
+      // ① 기도문 원본 저장
+      final noteId = await PrayerNoteService.savePrayerNote(
+        title: _titleController.text,
+        content: _bodyController.text,
+        categories: _selectedCategories,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          '저장되었습니다.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontFamily: 'Pretendard',
+      if (noteId == null) {
+        throw Exception('기도문 저장에 실패했습니다.');
+      }
+
+      // ② 오늘 활동 기록
+      await _updateDailyActivity();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isSaved = true;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            '저장되었습니다.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontFamily: 'Pretendard',
+            ),
+          ),
+          backgroundColor: const Color.fromRGBO(85, 85, 85, 1),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          margin: const EdgeInsets.only(
+            left: 100,
+            right: 100,
+            bottom: 40,
+          ),
+          duration: const Duration(seconds: 2),
+          elevation: 0,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '저장 중 오류가 발생했습니다.',
+            style: const TextStyle(
+              fontFamily: 'Pretendard',
+            ),
           ),
         ),
-        backgroundColor: const Color.fromRGBO(85, 85, 85, 1),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        margin: const EdgeInsets.only(left: 100, right: 100, bottom: 40),
-        duration: const Duration(seconds: 2),
-        elevation: 0,
-      ),
-    );
+      );
+
+      debugPrint('기도문 저장 오류: $e');
+    }
   }
 
   @override
