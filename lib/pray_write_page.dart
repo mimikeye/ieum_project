@@ -29,6 +29,60 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
   String _lastTitle = "";
   String _lastBody = "";
 
+  Future<bool> _showConfirmDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '저장하지 않고 나가시겠습니까?',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.black,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _DialogButton(
+                        text: '예',
+                        onTap: () => Navigator.pop(context, true),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _DialogButton(
+                        text: '취소',
+                        onTap: () => Navigator.pop(context, false),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    return result ?? false;
+  }
+
   void _updateButtonState() {
     final currentTitle = _titleController.text;
     final currentBody = _bodyController.text;
@@ -144,7 +198,21 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
           ), // 👇 이 숫자를 키울수록 버튼이 오른쪽으로 밀려납니다!
           child: IconButton(
             icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () async {
+              if (_isSaved ||
+                  (!_hasText &&
+                  _selectedImage == null &&
+                  _selectedCategories.isEmpty)) {
+                Navigator.pop(context);
+                return;
+              }
+
+              final shouldExit = await _showConfirmDialog();
+
+              if (shouldExit && context.mounted) {
+                Navigator.pop(context);
+              }
+            },
           ),
         ),
         title: const Text(
@@ -648,5 +716,42 @@ class LinedPaperPainter extends CustomPainter {
   bool shouldRepaint(covariant LinedPaperPainter oldDelegate) {
     return oldDelegate.lineHeight != lineHeight ||
         oldDelegate.titleHeight != titleHeight;
+  }
+}
+
+class _DialogButton extends StatelessWidget {
+  const _DialogButton({
+    required this.text,
+    required this.onTap,
+  });
+
+  final String text;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFEBEBEB),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        splashColor: const Color(0xFFCBCBCB),
+        highlightColor: const Color(0xFFCBCBCB),
+        child: SizedBox(
+          height: 45,
+          child: Center(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.black,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
