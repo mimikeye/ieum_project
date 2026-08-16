@@ -12,6 +12,29 @@ class PrayerNoteService {
   static final FirebaseStorage _storage =
       FirebaseStorage.instance;
 
+  static Future<Map<String, dynamic>?> getPrayerNote({
+    required String noteId,
+  }) async {
+    final username = await UserService.getCurrentUsername();
+
+    if (username == null || username.isEmpty) {
+      throw Exception('로그인한 사용자의 username을 찾을 수 없습니다.');
+    }
+
+    final doc = await _firestore
+        .collection('prayerNotes')
+        .doc(username)
+        .collection('notes')
+        .doc(noteId)
+        .get();
+
+    if (!doc.exists) {
+      return null;
+    }
+
+    return doc.data();
+  }
+
   static Future<String?> savePrayerNote({
     required String title,
     required String content,
@@ -23,6 +46,7 @@ class PrayerNoteService {
     if (username == null || username.isEmpty) {
       throw Exception('로그인한 사용자의 username을 찾을 수 없습니다.');
     }
+
 
     // -----------------------------------------
     // 1. 기도문 문서 생성
@@ -84,6 +108,32 @@ class PrayerNoteService {
     });
 
     return noteId;
+  }
+
+  static Future<void> updatePrayerNote({
+    required String noteId,
+    required String title,
+    required String content,
+    required List<String> categories,
+  }) async {
+    final username = await UserService.getCurrentUsername();
+
+    if (username == null || username.isEmpty) {
+      throw Exception('로그인한 사용자의 username을 찾을 수 없습니다.');
+    }
+
+    final noteRef = _firestore
+        .collection('prayerNotes')
+        .doc(username)
+        .collection('notes')
+        .doc(noteId);
+
+    await noteRef.update({
+      'title': title.trim(),
+      'content': content.trim(),
+      'categories': categories,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   static Future<QuerySnapshot<Map<String, dynamic>>>

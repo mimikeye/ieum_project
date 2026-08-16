@@ -94,6 +94,7 @@ class _PrayerNotesPageState extends State<PrayerNotesPage> {
           MaterialPageRoute(
             builder: (context) => PrayerNoteDetailPage(
               note: data,
+              noteId: note.id,
             ),
           ),
         );

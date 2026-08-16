@@ -1,23 +1,57 @@
 import 'package:flutter/material.dart';
+import 'pray_write_page.dart';
+import 'prayer_note_service.dart';
 
-class PrayerNoteDetailPage extends StatelessWidget {
+class PrayerNoteDetailPage extends StatefulWidget {
   final Map<String, dynamic> note;
+  final String noteId;
 
   const PrayerNoteDetailPage({
     super.key,
     required this.note,
+    required this.noteId,
   });
+
+    @override
+  State<PrayerNoteDetailPage> createState() =>
+      _PrayerNoteDetailPageState();
+}
+
+class _PrayerNoteDetailPageState
+    extends State<PrayerNoteDetailPage> {
+
+  late Map<String, dynamic> _note;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _note = Map<String, dynamic>.from(widget.note);
+  }
+
+
+  Future<void> _reloadNote() async {
+    final updatedNote = await PrayerNoteService.getPrayerNote(
+      noteId: widget.noteId,
+    );
+
+    if (updatedNote == null || !mounted) return;
+
+    setState(() {
+      _note = updatedNote;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final String title = note['title'] ?? '';
-    final String content = note['content'] ?? '';
+    final String title = _note['title'] ?? '';
+    final String content = _note['content'] ?? '';
 
     final List<String> categories =
-        List<String>.from(note['categories'] ?? []);
+        List<String>.from(_note['categories'] ?? []);
 
     final List<String> imageUrls =
-        List<String>.from(note['imageUrls'] ?? []);
+        List<String>.from(_note['imageUrls'] ?? []);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -46,6 +80,40 @@ class PrayerNoteDetailPage extends StatelessWidget {
         ),
         centerTitle: false,
         titleSpacing: 4,
+
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 21),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: Color(0xFFD9E7BF),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PrayerWriteScreen(
+                        noteId: widget.noteId,
+                        initialNote: _note,
+                      ),
+                    ),
+                  );
+
+                  await _reloadNote();
+                },
+                icon: const Icon(
+                  Icons.edit_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         bottom: false,

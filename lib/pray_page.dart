@@ -391,6 +391,7 @@ class PrayerScreen extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => PrayerNoteDetailPage(
               note: data,
+              noteId: note.id,
             ),
           ),
         );

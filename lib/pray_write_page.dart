@@ -11,7 +11,14 @@ import 'equalizer_icon.dart';
 import 'dart:math';
 
 class PrayerWriteScreen extends StatefulWidget {
-  const PrayerWriteScreen({super.key});
+  final String? noteId;
+  final Map<String, dynamic>? initialNote;
+
+  const PrayerWriteScreen({
+    super.key,
+    this.noteId,
+    this.initialNote,
+  });
 
   @override
   State<PrayerWriteScreen> createState() => _PrayerWriteScreenState();
@@ -167,16 +174,32 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
 
     try {
       // ① 기도문 원본 저장
-      final noteId = await PrayerNoteService.savePrayerNote(
-        title: _titleController.text,
-        content: _bodyController.text,
-        categories: _selectedCategories,
-        image: _selectedImage != null
-            ? File(_selectedImage!.path)
-            : null,
-      );
+      String? savedNoteId;
 
-      if (noteId == null) {
+      if (widget.noteId == null) {
+        // 새 기도문 작성
+        savedNoteId = await PrayerNoteService.savePrayerNote(
+          title: _titleController.text,
+          content: _bodyController.text,
+          categories: _selectedCategories,
+          image: _selectedImage != null
+              ? File(_selectedImage!.path)
+              : null,
+        );
+      } else {
+        // 기존 기도문 수정
+        await PrayerNoteService.updatePrayerNote(
+          noteId: widget.noteId!,
+          title: _titleController.text,
+          content: _bodyController.text,
+          categories: _selectedCategories,
+        );
+
+        // 수정한 기존 문서의 ID
+        savedNoteId = widget.noteId;
+      }
+
+      if (savedNoteId == null) {
         throw Exception('기도문 저장에 실패했습니다.');
       }
 
@@ -184,6 +207,8 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
       await _updateDailyActivity();
 
       if (!mounted) return;
+
+      await _audioPlayer.stop();
 
       setState(() {
         _isSaved = true;
@@ -237,6 +262,26 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
   @override
   void initState() {
     super.initState();
+
+    if (widget.initialNote != null) {
+      _titleController.text =
+          widget.initialNote!['title'] ?? '';
+
+      _bodyController.text =
+          widget.initialNote!['content'] ?? '';
+
+      _selectedCategories =
+          List<String>.from(
+            widget.initialNote!['categories'] ?? [],
+          );
+
+      _hasText =
+          _titleController.text.trim().isNotEmpty ||
+          _bodyController.text.trim().isNotEmpty;
+
+      _lastTitle = _titleController.text;
+      _lastBody = _bodyController.text;
+    }
     // (기존) 제목 줄 수 계산 리스너
     _titleController.addListener(() {
       int lines = '\n'.allMatches(_titleController.text).length + 1;
@@ -358,18 +403,31 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
           child: IconButton(
             icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
             onPressed: () async {
-              if (_isSaved ||
-                  (!_hasText &&
+              if (_isSaved) {
+                // 기존 기도문을 수정한 경우
+                if (widget.noteId != null) {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                } else {
+                  // 새 기도문을 작성한 경우
+                  Navigator.of(context).pop();
+                }
+
+                return;
+              }
+
+              if (!_hasText &&
                   _selectedImage == null &&
-                  _selectedCategories.isEmpty)) {
-                Navigator.pop(context);
+                  _selectedCategories.isEmpty) {
+                Navigator.of(context).pop();
                 return;
               }
 
               final shouldExit = await _showConfirmDialog();
 
               if (shouldExit && context.mounted) {
-                Navigator.pop(context);
+                await _audioPlayer.stop();
+                Navigator.of(context).pop();
               }
             },
           ),
