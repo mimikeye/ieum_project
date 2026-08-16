@@ -6,6 +6,9 @@ import 'package:flutter/cupertino.dart';
 import 'prayer_note_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'user_service.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'equalizer_icon.dart';
+import 'dart:math';
 
 class PrayerWriteScreen extends StatefulWidget {
   const PrayerWriteScreen({super.key});
@@ -24,6 +27,25 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
 
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
+
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  final Random _random = Random();
+
+  final List<String> _musicList = [
+    'audio/pray_music1.mp3',
+    'audio/pray_music2.mp3',
+    'audio/pray_music3.mp3',
+    'audio/pray_music4.mp3',
+    'audio/pray_music5.mp3',
+    'audio/pray_music6.mp3',
+    'audio/pray_music7.mp3',
+    'audio/pray_music8.mp3',
+    'audio/pray_music9.mp3',
+  ];
+
+  int? _currentMusicIndex;
+  bool _isMusicPlaying = false;
 
   List<String> _selectedCategories = [];
   int _titleLines = 1;
@@ -210,6 +232,8 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
     }
   }
 
+  
+
   @override
   void initState() {
     super.initState();
@@ -223,9 +247,67 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
       }
     });
 
+    _audioPlayer.onPlayerComplete.listen((event) {
+      if (_isMusicPlaying) {
+        _playRandomMusic();
+      }
+    });
+
     // 💡 [새로 추가] 글자 입력 시 버튼 색상을 바꾸기 위해 리스너 부착!
     _titleController.addListener(_updateButtonState);
     _bodyController.addListener(_updateButtonState);
+
+    _playRandomMusic();
+  }
+
+  Future<void> _playRandomMusic() async {
+    try {
+      int newIndex;
+
+      do {
+        newIndex = _random.nextInt(_musicList.length);
+      } while (
+          _musicList.length > 1 &&
+          newIndex == _currentMusicIndex);
+
+      _currentMusicIndex = newIndex;
+
+      await _audioPlayer.play(
+        AssetSource(_musicList[newIndex]),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isMusicPlaying = true;
+      });
+    } catch (e) {
+      debugPrint('음악 재생 오류: $e');
+    }
+  }
+
+  Future<void> _toggleMusic() async {
+    if (_isMusicPlaying) {
+      await _audioPlayer.pause();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isMusicPlaying = false;
+      });
+    } else {
+      if (_currentMusicIndex == null) {
+        await _playRandomMusic();
+      } else {
+        await _audioPlayer.resume();
+
+        if (!mounted) return;
+
+        setState(() {
+          _isMusicPlaying = true;
+        });
+      }
+    }
   }
 
   Future<void> _pickImage() async {
@@ -256,6 +338,7 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
 
   @override
   void dispose() {
+    _audioPlayer.dispose();
     _titleController.dispose();
     _bodyController.dispose();
     super.dispose();
@@ -303,7 +386,10 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
         centerTitle: false,
         titleSpacing: 4,
         actions: [
-          const Icon(Icons.graphic_eq, color: Colors.grey),
+          EqualizerIcon(
+            isPlaying: _isMusicPlaying,
+            onTap: _toggleMusic,
+          ),
           const SizedBox(width: 12),
           GestureDetector(
             onTap: _hasText ? _savePrayer : null,
