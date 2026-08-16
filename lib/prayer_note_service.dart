@@ -86,21 +86,45 @@ class PrayerNoteService {
     return noteId;
   }
 
-    // 저장된 나의 기도문 불러오기
   static Future<QuerySnapshot<Map<String, dynamic>>>
-      getPrayerNotes() async {
+      getPrayerNotes({int? limit}) async {
     final username = await UserService.getCurrentUsername();
 
     if (username == null || username.isEmpty) {
       throw Exception('로그인한 사용자의 username을 찾을 수 없습니다.');
     }
 
-    return await _firestore
+    Query<Map<String, dynamic>> query = _firestore
         .collection('prayerNotes')
         .doc(username)
         .collection('notes')
-        .orderBy('createdAt', descending: true)
-        .limit(2)
-        .get();
+        .orderBy('createdAt', descending: true);
+
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+
+    return await query.get();
+  }
+
+  static Stream<QuerySnapshot<Map<String, dynamic>>>
+      getPrayerNotesStream({int? limit}) async* {
+    final username = await UserService.getCurrentUsername();
+
+    if (username == null || username.isEmpty) {
+      throw Exception('로그인한 사용자의 username을 찾을 수 없습니다.');
+    }
+
+    Query<Map<String, dynamic>> query = _firestore
+        .collection('prayerNotes')
+        .doc(username)
+        .collection('notes')
+        .orderBy('createdAt', descending: true);
+
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+
+    yield* query.snapshots();
   }
 }

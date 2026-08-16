@@ -268,8 +268,8 @@ class PrayerScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               // 5. 기도문 리스트 
-              FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                future: PrayerNoteService.getPrayerNotes(),
+              StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: PrayerNoteService.getPrayerNotesStream(limit: 3),
                 builder: (context, snapshot) {
                   // 로딩 중
                   if (snapshot.connectionState == ConnectionState.waiting) {
