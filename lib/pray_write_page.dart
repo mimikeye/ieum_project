@@ -149,6 +149,9 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
         title: _titleController.text,
         content: _bodyController.text,
         categories: _selectedCategories,
+        image: _selectedImage != null
+            ? File(_selectedImage!.path)
+            : null,
       );
 
       if (noteId == null) {
