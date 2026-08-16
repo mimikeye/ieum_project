@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'pray_time.dart';
 import 'pray_write_page.dart';
+import 'prayer_note_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PrayerScreen extends StatelessWidget {
   PrayerScreen({super.key});
@@ -258,26 +260,71 @@ class PrayerScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               // 5. 기도문 리스트 
-              _buildPrayerListItem(
-                title: '가족을 위한 기도',
-                content: '사랑이 많으신 하나님 아버지,\n오늘도 저희 가족을 지켜주시고...',
-                date: '08.04',
-                tag: '가족',
-                imagePlaceholderColor: Colors.brown.shade200,
-                onTap: () {},
-              ),
-              const Divider(
-                height: 24,
-                thickness: 1,
-                color: Color(0xFFEEEEEE),
-              ),
-              _buildPrayerListItem(
-                title: '회개 기도',
-                content: '죄인인 저를 사랑한다 말하시는 하나님 아버지, 저의 죄를 고백합니다. 오늘...',
-                date: '08.04',
-                tag: '회개',
-                imagePlaceholderColor: Colors.black87,
-                onTap: () {},
+              FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                future: PrayerNoteService.getPrayerNotes(),
+                builder: (context, snapshot) {
+                  // 로딩 중
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 30),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+
+                  // 오류
+                  if (snapshot.hasError) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 30),
+                      child: Text(
+                        '기도문을 불러오지 못했습니다.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'Pretendard',
+                          color: Colors.grey,
+                        ),
+                      ),
+                    );
+                  }
+
+                  final notes = snapshot.data?.docs ?? [];
+
+                  // 기도문이 하나도 없을 때
+                  if (notes.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 30),
+                      child: Center(
+                        child: Text(
+                          '작성한 기도문이 없습니다.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Pretendard',
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  // 실제 기도문 표시
+                  return Column(
+                    children: [
+                      for (int i = 0; i < notes.length; i++) ...[
+                        _buildPrayerListItemFromFirebase(
+                          notes[i],
+                        ),
+
+                        if (i != notes.length - 1)
+                          const Divider(
+                            height: 24,
+                            thickness: 1,
+                            color: Color(0xFFEEEEEE),
+                          ),
+                      ],
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 40),
             ],
@@ -287,12 +334,58 @@ class PrayerScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildPrayerListItemFromFirebase(
+    QueryDocumentSnapshot<Map<String, dynamic>> note,
+  ) {
+    final data = note.data();
+
+    final String title =
+        (data['title'] ?? '').toString();
+
+    final String content =
+        (data['content'] ?? '').toString();
+
+    final String date =
+        (data['date'] ?? '').toString();
+
+    final List<String> categories =
+        List<String>.from(data['categories'] ?? []);
+
+    final List<String> imageUrls =
+        List<String>.from(data['imageUrls'] ?? []);
+
+    String displayDate = date;
+
+    // yyyy-MM-dd → MM.dd
+    if (date.length >= 10) {
+      displayDate =
+          '${date.substring(5, 7)}.${date.substring(8, 10)}';
+    }
+
+    final String tag =
+        categories.isNotEmpty ? categories.first : '';
+
+    final String? imageUrl =
+        imageUrls.isNotEmpty ? imageUrls.first : null;
+
+    return _buildPrayerListItem(
+      title: title,
+      content: content,
+      date: displayDate,
+      tag: tag,
+      imageUrl: imageUrl,
+      onTap: () {
+        // 나중에 상세 페이지 연결
+      },
+    );
+  }
+
   Widget _buildPrayerListItem({
     required String title,
     required String content,
     required String date,
     required String tag,
-    required Color imagePlaceholderColor,
+    String? imageUrl,
     required VoidCallback onTap,
   }) {
     return Material(
@@ -305,82 +398,95 @@ class PrayerScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Pretendard',
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      content,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'Pretendard',
-                        height: 1.4,
-                        color: Colors.black87,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          date,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontFamily: 'Pretendard',
-                            color: Colors.grey.shade600,
-                          ),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Pretendard',
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 0.5,
-                          height: 11,
-                          color: const Color.fromRGBO(113, 113, 113, 100),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        content,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Pretendard',
+                          height: 1.4,
+                          color: Colors.black87,
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7),
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: const Color.fromRGBO(166, 166, 166, 1),
-                            ),
-                          ),
-                          child: Text(
-                            tag,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            date,
                             style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
                               fontFamily: 'Pretendard',
-                              color: _tagTextColor,
+                              color: Colors.grey.shade600,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 0.5,
+                            height: 11,
+                            color: const Color.fromRGBO(113, 113, 113, 100),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7),
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color.fromRGBO(166, 166, 166, 1),
+                              ),
+                            ),
+                            child: Text(
+                              tag,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Pretendard',
+                                color: _tagTextColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: 95,
-                  height: 95,
-                  color: imagePlaceholderColor,
+              if (imageUrl != null && imageUrl.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 95,
+                    height: 95,
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const SizedBox(
+                          width: 95,
+                          height: 95,
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
