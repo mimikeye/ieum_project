@@ -4,6 +4,7 @@ import 'pray_time.dart';
 import 'pray_write_page.dart';
 import 'prayer_note_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'prayer_note_list.dart';
 
 class PrayerScreen extends StatelessWidget {
   PrayerScreen({super.key});
@@ -234,7 +235,14 @@ class PrayerScreen extends StatelessWidget {
                     ),
                   ),
                   InkWell(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PrayerNotesPage(),
+                        ),
+                      );
+                    },
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
