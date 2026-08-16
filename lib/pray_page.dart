@@ -5,6 +5,7 @@ import 'pray_write_page.dart';
 import 'prayer_note_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'prayer_note_list.dart';
+import 'prayer_note_detail_page.dart';
 
 class PrayerScreen extends StatelessWidget {
   PrayerScreen({super.key});
@@ -320,6 +321,7 @@ class PrayerScreen extends StatelessWidget {
                     children: [
                       for (int i = 0; i < notes.length; i++) ...[
                         _buildPrayerListItemFromFirebase(
+                          context,
                           notes[i],
                         ),
 
@@ -343,6 +345,7 @@ class PrayerScreen extends StatelessWidget {
   }
 
   Widget _buildPrayerListItemFromFirebase(
+    BuildContext context,
     QueryDocumentSnapshot<Map<String, dynamic>> note,
   ) {
     final data = note.data();
@@ -383,7 +386,14 @@ class PrayerScreen extends StatelessWidget {
       tag: tag,
       imageUrl: imageUrl,
       onTap: () {
-        // 나중에 상세 페이지 연결
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PrayerNoteDetailPage(
+              note: data,
+            ),
+          ),
+        );
       },
     );
   }

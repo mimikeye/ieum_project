@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'prayer_note_service.dart';
+import 'prayer_note_detail_page.dart';
 
 class PrayerNotesPage extends StatefulWidget {
   const PrayerNotesPage({super.key});
@@ -88,7 +89,14 @@ class _PrayerNotesPageState extends State<PrayerNotesPage> {
       tag: tag,
       imageUrl: imageUrl,
       onTap: () {
-        // 나중에 상세 페이지 연결
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PrayerNoteDetailPage(
+              note: data,
+            ),
+          ),
+        );
       },
     );
   }
