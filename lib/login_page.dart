@@ -195,8 +195,11 @@ class _LoginPageState extends State<LoginPage> {
         final uid = userCredential.user?.uid;
 
         if (uid != null) {
+          final username =
+              await _createUniqueUsername(googleUser.email);
+
           await _firestore.collection('users').doc(uid).set({
-            'username': null,
+            'username': username,
             'nickname': googleUser.displayName ?? '',
             'email': googleUser.email,
             'createdAt': FieldValue.serverTimestamp(),
@@ -220,6 +223,28 @@ class _LoginPageState extends State<LoginPage> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<String> _createUniqueUsername(String email) async {
+    final baseUsername = email.split('@').first;
+
+    String username = baseUsername;
+    int number = 2;
+
+    while (true) {
+      final snapshot = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        return username;
+      }
+
+      username = '${baseUsername}_$number';
+      number++;
     }
   }
 
