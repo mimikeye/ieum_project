@@ -253,14 +253,24 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           children: [
 
+            const SizedBox(
+              height: 125,
+            ),
+
             // ====================================
-            // 위쪽 빈 공간
-            //
-            // 이 숫자로 입력창의 세로 위치를 조절
+            // 앱 로고
             // ====================================
 
+            Center(
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                width: 212,
+                fit: BoxFit.contain,
+              ),
+            ),
+
             const SizedBox(
-              height: 323.12,
+              height: 70,
             ),
 
             // ====================================

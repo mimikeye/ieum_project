@@ -7,6 +7,7 @@ import 'login_page.dart';
 import 'home_page.dart';
 import 'calender_main.dart';
 import 'pray_page.dart';
+import 'splash_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +42,7 @@ class PrayerApp extends StatelessWidget {
       ),
 
       // 앱 실행 시 로그인 화면부터 시작
-      home: const LoginPage(),
+      home: const SplashPage(),
     );
   }
 }
