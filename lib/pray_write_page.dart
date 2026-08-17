@@ -695,25 +695,29 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
                                                                         );
                                                                   });
                                                                 },
-                                                                child: Container(
-                                                                  width: 16,
-                                                                  height: 16,
-                                                                  decoration: const BoxDecoration(
-                                                                    color:
-                                                                        Color.fromRGBO(
+                                                                child: SizedBox(
+                                                                  width: 28,
+                                                                  height: 28,
+                                                                  child: Align(
+                                                                    alignment: Alignment.topRight,
+                                                                    child: Container(
+                                                                      width: 16,
+                                                                      height: 16,
+                                                                      decoration: const BoxDecoration(
+                                                                        color: Color.fromRGBO(
                                                                           217,
                                                                           217,
                                                                           217,
                                                                           1,
                                                                         ),
-                                                                    shape: BoxShape
-                                                                        .circle,
-                                                                  ),
-                                                                  child: const Icon(
-                                                                    Icons.close,
-                                                                    size: 10,
-                                                                    color: Colors
-                                                                        .white,
+                                                                        shape: BoxShape.circle,
+                                                                      ),
+                                                                      child: const Icon(
+                                                                        Icons.close,
+                                                                        size: 10,
+                                                                        color: Colors.white,
+                                                                      ),
+                                                                    ),
                                                                   ),
                                                                 ),
                                                               ),
@@ -756,8 +760,8 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
                                                 ),
                                               ),
                                               style: TextStyle(
-                                                fontSize: 14,
-                                                height: _lineHeight / 14,// 줄간격 맞춤
+                                                fontSize: 16,
+                                                height: _lineHeight / 16,// 줄간격 맞춤
                                                 color: Colors.black87,
                                                 fontFamily: 'Pretendard',
                                               ),
