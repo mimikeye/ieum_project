@@ -206,10 +206,12 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      _showMessage('Google 로그인되었습니다.');
-
-      // TODO:
-      // 로그인 성공 후 메인 페이지로 이동
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const RootScreen(),
+        ),
+      );
     } catch (e) {
       _showMessage('Google 로그인에 실패했습니다.');
     } finally {
