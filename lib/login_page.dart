@@ -277,6 +277,9 @@ class _LoginPageState extends State<LoginPage> {
       // ========================================
 
       body: SafeArea(
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: 
+              ScrollViewKeyboardDismissBehavior.onDrag,
         child: Column(
           children: [
 
@@ -877,6 +880,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
