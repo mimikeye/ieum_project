@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'prayer_note_service.dart';
+import 'prayer_note_detail_page.dart';
+
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
@@ -26,8 +29,285 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Set<String> _activityDates = {};
 
+  String? _selectedDate;
+
+  int _selectedDatePrayerTime = 0;
+
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _selectedDateNotes = [];
+
   // 💡 main.dart에서 통합 관리하므로 _selectedIndex 와 _primaryDarkGreen 관련 변수는 삭제했습니다.
 
+  Future<void> _loadPrayerTime(String dateKey) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return;
+
+    final userSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    final userData = userSnapshot.data();
+
+    if (userData == null) return;
+
+    final username = userData['username'] as String?;
+
+    if (username == null || username.isEmpty) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('dailyActivities')
+        .doc(username)
+        .collection('dates')
+        .doc(dateKey)
+        .get();
+
+    if (!doc.exists) {
+      if (!mounted) return;
+
+      setState(() {
+        _selectedDatePrayerTime = 0;
+      });
+
+      return;
+    }
+
+    final data = doc.data();
+
+    final prayerTime =
+        (data?['prayerTime'] as num?)?.toInt() ?? 0;
+
+    if (!mounted) return;
+
+    setState(() {
+      _selectedDatePrayerTime = prayerTime;
+    });
+  }
+
+  Future<void> _loadPrayerNotes(String dateKey) async {
+    try {
+      final snapshot = await PrayerNoteService.getPrayerNotes();
+
+      final notes = snapshot.docs.where((note) {
+        final data = note.data();
+
+        final date = (data['date'] ?? '').toString();
+
+        return date == dateKey;
+      }).toList();
+
+      if (!mounted) return;
+
+      setState(() {
+        _selectedDateNotes = notes;
+      });
+    } catch (e) {
+      debugPrint('기도문 불러오기 오류: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _selectedDateNotes = [];
+      });
+    }
+  }
+
+  Widget _buildCalendarPrayerItem(
+    QueryDocumentSnapshot<Map<String, dynamic>> note,
+  ) {
+    final data = note.data();
+
+    final String title =
+        (data['title'] ?? '').toString();
+
+    final String content =
+        (data['content'] ?? '').toString();
+
+    final String date =
+        (data['date'] ?? '').toString();
+
+    final List<String> categories =
+        List<String>.from(data['categories'] ?? []);
+
+    final List<String> imageUrls =
+        List<String>.from(data['imageUrls'] ?? []);
+
+    String displayDate = date;
+
+    if (date.length >= 10) {
+      displayDate =
+          '${date.substring(5, 7)}.${date.substring(8, 10)}';
+    }
+
+    final String tag =
+        categories.isNotEmpty ? categories.first : '';
+
+    final String? imageUrl =
+        imageUrls.isNotEmpty ? imageUrls.first : null;
+
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PrayerNoteDetailPage(
+                note: data,
+                noteId: note.id,
+              ),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+
+                      const SizedBox(height: 3),
+
+                      Text(
+                        content,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Pretendard',
+                          height: 1.4,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            displayDate,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'Pretendard',
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          Container(
+                            width: 0.5,
+                            height: 11,
+                            color: const Color.fromRGBO(
+                              113,
+                              113,
+                              113,
+                              100,
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius:
+                                  BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color.fromRGBO(
+                                  166,
+                                  166,
+                                  166,
+                                  1,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              tag,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Pretendard',
+                                color: Color.fromRGBO(
+                                  166,
+                                  166,
+                                  166,
+                                  1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 16),
+
+              if (imageUrl != null && imageUrl.isNotEmpty)
+                ClipRRect(
+                  borderRadius:
+                      BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 95,
+                    height: 95,
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (context, error, stackTrace) {
+                        return const SizedBox(
+                          width: 95,
+                          height: 95,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatPrayerTime(int totalSeconds) {
+    final hours = totalSeconds ~/ 3600;
+    final minutes = (totalSeconds % 3600) ~/ 60;
+    final seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return '$hours시간 $minutes분 $seconds초';
+    }
+
+    if (minutes > 0) {
+      return '$minutes분 $seconds초';
+    }
+
+    return '$seconds초';
+  }
 
   // ==========================================
   // Firestore 활동 날짜 가져오기
@@ -77,10 +357,22 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   @override
-    void initState() {
-      super.initState();
-      _loadActivityDates();
-    }
+  void initState() {
+    super.initState();
+
+    final today = DateTime.now();
+
+    final todayKey =
+        '${today.year.toString().padLeft(4, '0')}-'
+        '${today.month.toString().padLeft(2, '0')}-'
+        '${today.day.toString().padLeft(2, '0')}';
+
+    _selectedDate = todayKey;
+
+    _loadActivityDates();
+    _loadPrayerTime(todayKey);
+    _loadPrayerNotes(todayKey);
+  }
 
   // ==========================================
   // 월 이동
@@ -426,30 +718,43 @@ class _CalendarPageState extends State<CalendarPage> {
                       '${day.toString().padLeft(2, '0')}';
 
                   final hasActivity = _activityDates.contains(dateKey);
+                  final isSelected = _selectedDate == dateKey;
 
                   return Center(
-                    child: Container(
-                      width: 35,
-                      height: 35,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: hasActivity
-                            ? const Color(0xFFEAF8CB)
-                            : Colors.transparent,
-                        border: isToday
-                            ? Border.all(
-                                color: Colors.black,
-                                width: 1,
-                              )
-                            : null,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '$day',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.black,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedDate = dateKey;
+                        });
+
+                        _loadPrayerTime(dateKey);
+                        _loadPrayerNotes(dateKey);
+                      },
+                      child: Container(
+                        width: 35,
+                        height: 35,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: hasActivity
+                              ? const Color(0xFFEAF8CB)
+                              : Colors.transparent,
+                          border: isToday
+                              ? Border.all(
+                                  color: Colors.black,
+                                  width: 1,
+                                )
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$day',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
                     ),
@@ -457,7 +762,84 @@ class _CalendarPageState extends State<CalendarPage> {
                 },
               ),
             ),
-            const Spacer(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 20,
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 312,
+                        height: 41,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: const Color(0xFFE5E5E5),
+                            width: 1,
+                          ),
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: Text(
+                          '${_formatPrayerTime(_selectedDatePrayerTime)} 기도했어요.',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 28),
+
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Color(0xFFEEEEEE),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      if (_selectedDateNotes.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 30),
+                          child: Center(
+                            child: Text(
+                              '작성한 기도문이 없습니다.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontFamily: 'Pretendard',
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Column(
+                          children: [
+                            for (int i = 0;
+                                i < _selectedDateNotes.length;
+                                i++) ...[
+                              _buildCalendarPrayerItem(
+                                _selectedDateNotes[i],
+                              ),
+
+                              if (i != _selectedDateNotes.length - 1)
+                                const Divider(
+                                  height: 24,
+                                  thickness: 1,
+                                  color: Color(0xFFEEEEEE),
+                                ),
+                            ],
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
