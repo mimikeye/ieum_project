@@ -222,6 +222,7 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
 
       setState(() {
         _isSaved = true;
+        _isMusicPlaying = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -498,424 +499,429 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Color.fromRGBO(247, 247, 247, 1),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            child: SafeArea(
-              top: false,
-              left: false,
-              right: false,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final double areaHeight = constraints.maxHeight;
-
-                        // 기본 제목 영역의 높이
-                        final double currentTitleHeight =
-                            _baseTitleHeight +
-                            (_titleLines - 1) * _titleLineHeight;
-
-                        // 카테고리가 선택되었을 때 추가로 필요한 높이 공간 설정
-                        final double categoryAreaHeight =
-                            _selectedCategories.isNotEmpty ? 40.0 : 0.0;
-
-                        // 💡 [새로 추가된 부분] 사진이 차지할 높이와 본문이 늘어나야 할 최소 높이 계산
-                        // 사진 200px + 아래 여백 20px = 220px
-                        final double imageAreaHeight =
-                            (_selectedImage != null || _existingImageUrl != null)
-                                ? 220.0
-                                : 0.0;
-                        final double minBodyHeight =
-                            areaHeight -
-                            currentTitleHeight -
-                            categoryAreaHeight -
-                            imageAreaHeight;
-
-                        return Stack(
-                          children: [
-                            // 배경 밑줄과 글자가 함께 스크롤되도록 구조 변경
-                            SingleChildScrollView(
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  // 글이 짧아도 전체 화면에 줄이 그어지도록 최소 높이를 areaHeight로 설정
-                                  minHeight: areaHeight,
-                                ),
-                                child: Stack(
-                                  children: [
-                                    // 💡 [수정됨] 1. 배경 선 그리기: 카테고리 유무에 따라 굵은 선의 위치를 동적으로 조절
-                                    // 💡 [수정됨] 1. 배경 선 그리기: Positioned.fill을 사용해 글 길이에 맞춰 도화지를 무한히 늘립니다.
-                                    Positioned.fill(
-                                      child: CustomPaint(
-                                        // 💡 고정된 size 옵션을 아예 삭제합니다!
-                                        painter: LinedPaperPainter(
-                                          lineHeight: _lineHeight,
-                                          titleHeight:
-                                              currentTitleHeight +
-                                              categoryAreaHeight,
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color.fromRGBO(247, 247, 247, 1),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: SafeArea(
+                top: false,
+                left: false,
+                right: false,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final double areaHeight = constraints.maxHeight;
+        
+                          // 기본 제목 영역의 높이
+                          final double currentTitleHeight =
+                              _baseTitleHeight +
+                              (_titleLines - 1) * _titleLineHeight;
+        
+                          // 카테고리가 선택되었을 때 추가로 필요한 높이 공간 설정
+                          final double categoryAreaHeight =
+                              _selectedCategories.isNotEmpty ? 40.0 : 0.0;
+        
+                          // 💡 [새로 추가된 부분] 사진이 차지할 높이와 본문이 늘어나야 할 최소 높이 계산
+                          // 사진 200px + 아래 여백 20px = 220px
+                          final double imageAreaHeight =
+                              (_selectedImage != null || _existingImageUrl != null)
+                                  ? 220.0
+                                  : 0.0;
+                          final double minBodyHeight =
+                              areaHeight -
+                              currentTitleHeight -
+                              categoryAreaHeight -
+                              imageAreaHeight;
+        
+                          return Stack(
+                            children: [
+                              // 배경 밑줄과 글자가 함께 스크롤되도록 구조 변경
+                              SingleChildScrollView(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    // 글이 짧아도 전체 화면에 줄이 그어지도록 최소 높이를 areaHeight로 설정
+                                    minHeight: areaHeight,
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      // 💡 [수정됨] 1. 배경 선 그리기: 카테고리 유무에 따라 굵은 선의 위치를 동적으로 조절
+                                      // 💡 [수정됨] 1. 배경 선 그리기: Positioned.fill을 사용해 글 길이에 맞춰 도화지를 무한히 늘립니다.
+                                      Positioned.fill(
+                                        child: CustomPaint(
+                                          // 💡 고정된 size 옵션을 아예 삭제합니다!
+                                          painter: LinedPaperPainter(
+                                            lineHeight: _lineHeight,
+                                            titleHeight:
+                                                currentTitleHeight +
+                                                categoryAreaHeight,
+                                          ),
                                         ),
                                       ),
-                                    ),
-
-                                    // 제목, 카테고리, 본문 입력창 Column
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        // 1. 제목 입력창
-                                        SizedBox(
-                                          height: currentTitleHeight,
-                                          child: TextField(
-                                            controller: _titleController,
-                                            maxLines: null,
-                                            cursorColor: Colors.black,
-                                            cursorHeight: 20.0,
-                                            style: const TextStyle(
-                                              fontSize: 19,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.black87,
-                                              fontFamily: 'Pretendard',
-                                              height: 1.2,
-                                            ),
-                                            decoration: const InputDecoration(
-                                              hintText: '제목',
-                                              hintStyle: TextStyle(
-                                                color: Color.fromRGBO(
-                                                  224,
-                                                  224,
-                                                  224,
-                                                  1,
-                                                ),
-                                                fontWeight: FontWeight.w400,
-                                                height: 1.3,
+        
+                                      // 제목, 카테고리, 본문 입력창 Column
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          // 1. 제목 입력창
+                                          SizedBox(
+                                            height: currentTitleHeight,
+                                            child: TextField(
+                                              controller: _titleController,
+                                              maxLines: null,
+                                              cursorColor: Colors.black,
+                                              cursorHeight: 20.0,
+                                              style: const TextStyle(
+                                                fontSize: 19,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.black87,
+                                                fontFamily: 'Pretendard',
+                                                height: 1.2,
                                               ),
-                                              border: InputBorder.none,
-                                              contentPadding: EdgeInsets.only(
-                                                left: 20,
-                                                right: 20,
-                                                top: 14,
-                                                bottom: 10,
+                                              decoration: const InputDecoration(
+                                                hintText: '제목',
+                                                hintStyle: TextStyle(
+                                                  color: Color.fromRGBO(
+                                                    224,
+                                                    224,
+                                                    224,
+                                                    1,
+                                                  ),
+                                                  fontWeight: FontWeight.w400,
+                                                  height: 1.3,
+                                                ),
+                                                border: InputBorder.none,
+                                                contentPadding: EdgeInsets.only(
+                                                  left: 20,
+                                                  right: 20,
+                                                  top: 14,
+                                                  bottom: 10,
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-
-                                        // 💡 [수정됨] 2. 카테고리 태그를 제목 밑으로 이동 및 가로 스크롤 적용
-                                        if (_selectedCategories.isNotEmpty)
-                                          Container(
-                                            height: 40.0, // 카테고리 영역 고정 높이
-                                            padding: const EdgeInsets.only(
-                                              left: 20,
-                                              right: 20,
-                                              bottom: 8,
-                                            ),
-                                            alignment: Alignment
-                                                .centerLeft, // 태그를 왼쪽 정렬
-                                            child: SingleChildScrollView(
-                                              scrollDirection:
-                                                  Axis.horizontal, // 가로 스크롤
-                                              // ... 카테고리 가로 스크롤 부분 ...
-                                              child: Row(
-                                                children: _selectedCategories.map((
-                                                  category,
-                                                ) {
-                                                  return Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          right: 6.0,
-                                                        ),
-                                                    child: Stack(
-                                                      children: [
-                                                        // 👇 1. 카테고리 글자를 감싸는 둥근 껍데기
-                                                        Container(
-                                                          margin:
-                                                              const EdgeInsets.only(
-                                                                top: 6,
-                                                                right: 6,
-                                                              ),
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 12,
-                                                                vertical: 4,
-                                                              ),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.white,
-                                                            border: Border.all(
-                                                              color: Colors
-                                                                  .grey
-                                                                  .shade300,
-                                                            ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  16,
-                                                                ),
+        
+                                          // 💡 [수정됨] 2. 카테고리 태그를 제목 밑으로 이동 및 가로 스크롤 적용
+                                          if (_selectedCategories.isNotEmpty)
+                                            Container(
+                                              height: 40.0, // 카테고리 영역 고정 높이
+                                              padding: const EdgeInsets.only(
+                                                left: 20,
+                                                right: 20,
+                                                bottom: 8,
+                                              ),
+                                              alignment: Alignment
+                                                  .centerLeft, // 태그를 왼쪽 정렬
+                                              child: SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal, // 가로 스크롤
+                                                // ... 카테고리 가로 스크롤 부분 ...
+                                                child: Row(
+                                                  children: _selectedCategories.map((
+                                                    category,
+                                                  ) {
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            right: 6.0,
                                                           ),
-                                                          child: Text(
-                                                            category,
-                                                            style: const TextStyle(
-                                                              fontSize: 12,
-                                                              color:
-                                                                  Color.fromRGBO(
-                                                                    166,
-                                                                    166,
-                                                                    166,
-                                                                    1,
+                                                      child: Stack(
+                                                        children: [
+                                                          // 👇 1. 카테고리 글자를 감싸는 둥근 껍데기
+                                                          Container(
+                                                            margin:
+                                                                const EdgeInsets.only(
+                                                                  top: 6,
+                                                                  right: 6,
+                                                                ),
+                                                            padding:
+                                                                const EdgeInsets.symmetric(
+                                                                  horizontal: 12,
+                                                                  vertical: 4,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.white,
+                                                              border: Border.all(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .shade300,
+                                                              ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    16,
                                                                   ),
-                                                              fontFamily:
-                                                                  'Pretendard',
-                                                              height: 1.2,
                                                             ),
-                                                          ),
-                                                        ),
-
-                                                        // 👇 2. 바로 여기입니다! 저장되기 전(!_isSaved)에만 x 버튼 띄우기
-                                                        if (!_isSaved)
-                                                          Positioned(
-                                                            top: 0,
-                                                            right: 0,
-                                                            child: GestureDetector(
-                                                              onTap: () {
-                                                                setState(() {
-                                                                  _selectedCategories
-                                                                      .remove(
-                                                                        category,
-                                                                      );
-                                                                });
-                                                              },
-                                                              child: Container(
-                                                                width: 16,
-                                                                height: 16,
-                                                                decoration: const BoxDecoration(
-                                                                  color:
-                                                                      Color.fromRGBO(
-                                                                        217,
-                                                                        217,
-                                                                        217,
-                                                                        1,
-                                                                      ),
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                ),
-                                                                child: const Icon(
-                                                                  Icons.close,
-                                                                  size: 10,
-                                                                  color: Colors
-                                                                      .white,
-                                                                ),
+                                                            child: Text(
+                                                              category,
+                                                              style: const TextStyle(
+                                                                fontSize: 12,
+                                                                color:
+                                                                    Color.fromRGBO(
+                                                                      166,
+                                                                      166,
+                                                                      166,
+                                                                      1,
+                                                                    ),
+                                                                fontFamily:
+                                                                    'Pretendard',
+                                                                height: 1.2,
                                                               ),
                                                             ),
                                                           ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                }).toList(),
+        
+                                                          // 👇 2. 바로 여기입니다! 저장되기 전(!_isSaved)에만 x 버튼 띄우기
+                                                          if (!_isSaved)
+                                                            Positioned(
+                                                              top: 0,
+                                                              right: 0,
+                                                              child: GestureDetector(
+                                                                onTap: () {
+                                                                  setState(() {
+                                                                    _selectedCategories
+                                                                        .remove(
+                                                                          category,
+                                                                        );
+                                                                  });
+                                                                },
+                                                                child: Container(
+                                                                  width: 16,
+                                                                  height: 16,
+                                                                  decoration: const BoxDecoration(
+                                                                    color:
+                                                                        Color.fromRGBO(
+                                                                          217,
+                                                                          217,
+                                                                          217,
+                                                                          1,
+                                                                        ),
+                                                                    shape: BoxShape
+                                                                        .circle,
+                                                                  ),
+                                                                  child: const Icon(
+                                                                    Icons.close,
+                                                                    size: 10,
+                                                                    color: Colors
+                                                                        .white,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                            ),
+        
+                                          // 3. 본문 입력창
+                                          // 3. 본문 입력창
+                                          Container(
+                                            constraints: BoxConstraints(
+                                              minHeight: minBodyHeight > 0
+                                                  ? minBodyHeight
+                                                  : 0,
+                                            ),
+                                            child: TextField(
+                                              controller: _bodyController,
+                                              cursorColor: Colors.black,
+                                              cursorHeight: 21.0,
+                                              maxLines: null, // 무한 스크롤 가능
+                                              keyboardType:
+                                                  TextInputType.multiline,
+                                              // 💡 주의: 안에 변수가 들어가므로 const를 지웠습니다!
+                                              decoration: InputDecoration(
+                                                border: InputBorder.none,
+                                                contentPadding: EdgeInsets.only(
+                                                  left: 20,
+                                                  right: 20,
+                                                  top: 5.0,
+                                                  // 💡 핵심: 사진이 있으면 여백 20, 없으면 터치 영역을 위해 300!
+                                                  bottom:
+                                                      (_selectedImage != null || _existingImageUrl != null)
+                                                          ? 20.0
+                                                          : 300.0,
+                                                ),
+                                              ),
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                height: _lineHeight / 14,// 줄간격 맞춤
+                                                color: Colors.black87,
+                                                fontFamily: 'Pretendard',
                                               ),
                                             ),
                                           ),
-
-                                        // 3. 본문 입력창
-                                        // 3. 본문 입력창
-                                        Container(
-                                          constraints: BoxConstraints(
-                                            minHeight: minBodyHeight > 0
-                                                ? minBodyHeight
-                                                : 0,
-                                          ),
-                                          child: TextField(
-                                            controller: _bodyController,
-                                            cursorColor: Colors.black,
-                                            cursorHeight: 21.0,
-                                            maxLines: null, // 무한 스크롤 가능
-                                            keyboardType:
-                                                TextInputType.multiline,
-                                            // 💡 주의: 안에 변수가 들어가므로 const를 지웠습니다!
-                                            decoration: InputDecoration(
-                                              border: InputBorder.none,
-                                              contentPadding: EdgeInsets.only(
+        
+                                          // 4. 사진 미리보기
+                                          if (_selectedImage != null || _existingImageUrl != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
                                                 left: 20,
                                                 right: 20,
-                                                top: 5.0,
-                                                // 💡 핵심: 사진이 있으면 여백 20, 없으면 터치 영역을 위해 300!
-                                                bottom:
-                                                    (_selectedImage != null || _existingImageUrl != null)
-                                                        ? 20.0
-                                                        : 300.0,
+                                                bottom: 20,
                                               ),
-                                            ),
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              height:
-                                                  _lineHeight / 14, // 줄간격 맞춤
-                                              color: Colors.black87,
-                                              fontFamily: 'Pretendard',
-                                            ),
-                                          ),
-                                        ),
-
-                                        // 4. 사진 미리보기
-                                        if (_selectedImage != null || _existingImageUrl != null)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 20,
-                                              right: 20,
-                                              bottom: 20,
-                                            ),
-                                            child: Stack(
-                                              children: [
-                                                // 사진 배경
-                                                Container(
-                                                  width: double.infinity,
-                                                  height: 200,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey.shade200,
-                                                    borderRadius: BorderRadius.circular(8),
+                                              child: Stack(
+                                                children: [
+                                                  // 사진 배경
+                                                  Container(
+                                                    width: double.infinity,
+                                                    height: 200,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey.shade200,
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child: ClipRRect(
+                                                      borderRadius: BorderRadius.circular(8),
+                                                      child: _selectedImage != null
+                                                          ? Image.file(
+                                                              File(_selectedImage!.path),
+                                                              width: double.infinity,
+                                                              height: 200,
+                                                              fit: BoxFit.cover,
+                                                            )
+                                                          : Image.network(
+                                                              _existingImageUrl!,
+                                                              width: double.infinity,
+                                                              height: 200,
+                                                              fit: BoxFit.cover,
+                                                            ),
+                                                    ),
                                                   ),
-                                                  child: ClipRRect(
-                                                    borderRadius: BorderRadius.circular(8),
-                                                    child: _selectedImage != null
-                                                        ? Image.file(
-                                                            File(_selectedImage!.path),
-                                                            width: double.infinity,
-                                                            height: 200,
-                                                            fit: BoxFit.cover,
-                                                          )
-                                                        : Image.network(
-                                                            _existingImageUrl!,
-                                                            width: double.infinity,
-                                                            height: 200,
-                                                            fit: BoxFit.cover,
+        
+                                                  // 우측 상단 '-' 삭제 버튼
+                                                  if (!_isSaved)
+                                                    Positioned(
+                                                      top: 12,
+                                                      right: 12,
+                                                      child: GestureDetector(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            if (_selectedImage != null) {
+                                                              // 새로 선택한 사진 삭제
+                                                              _selectedImage = null;
+                                                            } else {
+                                                              // 기존 Firebase 사진 삭제
+                                                              _existingImageUrl = null;
+                                                              _removeExistingImage = true;
+                                                            }
+                                                          });
+                                                        },
+                                                        child: Container(
+                                                          width: 28,
+                                                          height: 28,
+                                                          decoration: const BoxDecoration(
+                                                            color: Color.fromRGBO(
+                                                              153,
+                                                              153,
+                                                              153,
+                                                              0.8,
+                                                            ),
+                                                            shape: BoxShape.circle,
                                                           ),
-                                                  ),
-                                                ),
-
-                                                // 우측 상단 '-' 삭제 버튼
-                                                if (!_isSaved)
-                                                  Positioned(
-                                                    top: 12,
-                                                    right: 12,
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        setState(() {
-                                                          if (_selectedImage != null) {
-                                                            // 새로 선택한 사진 삭제
-                                                            _selectedImage = null;
-                                                          } else {
-                                                            // 기존 Firebase 사진 삭제
-                                                            _existingImageUrl = null;
-                                                            _removeExistingImage = true;
-                                                          }
-                                                        });
-                                                      },
-                                                      child: Container(
-                                                        width: 28,
-                                                        height: 28,
-                                                        decoration: const BoxDecoration(
-                                                          color: Color.fromRGBO(
-                                                            153,
-                                                            153,
-                                                            153,
-                                                            0.8,
+                                                          child: const Icon(
+                                                            Icons.remove,
+                                                            color: Colors.white,
+                                                            size: 20,
                                                           ),
-                                                          shape: BoxShape.circle,
-                                                        ),
-                                                        child: const Icon(
-                                                          Icons.remove,
-                                                          color: Colors.white,
-                                                          size: 20,
                                                         ),
                                                       ),
                                                     ),
-                                                  ),
-                                              ],
+                                                ],
+                                              ),
                                             ),
-                                          ),
-
-                                        if (_selectedImage != null || _existingImageUrl != null)
-                                          const SizedBox(height: 100),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 20.0,
-                      right: 20.0,
-                      top: 8.0,
-                      bottom:
-                          36.0, // 💡 이 숫자를 키울수록 버튼들이 위로 쑥쑥 올라갑니다! (원하는 만큼 조절해 보세요)
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        InkWell(
-                          onTap: _pickImage,
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              left: 0.0,
-                              right: 4.0,
-                              top: 4.0,
-                              bottom: 4.0,
-                            ),
-                            child: Image.asset(
-                              'assets/images/ImageIcon.png',
-                              width: 25,
-                              height: 25,
-                            ),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: _showCategorySelection,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Color.fromRGBO(166, 166, 166, 1),
-                                width: 1.2,
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Row(
-                              children: [
-                                Text(
-                                  '카테고리',
-                                  style: TextStyle(
-                                    color: Color.fromRGBO(166, 166, 166, 1),
-                                    fontSize: 13,
-                                    fontFamily: 'Pretendard',
+        
+                                          if (_selectedImage != null || _existingImageUrl != null)
+                                            const SizedBox(height: 100),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                SizedBox(width: 4),
-                                Icon(
-                                  Icons.add,
-                                  color: Color.fromRGBO(166, 166, 166, 1),
-                                  size: 16,
-                                ),
-                              ],
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 20.0,
+                        right: 20.0,
+                        top: 8.0,
+                        bottom:
+                            36.0, // 💡 이 숫자를 키울수록 버튼들이 위로 쑥쑥 올라갑니다! (원하는 만큼 조절해 보세요)
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          InkWell(
+                            onTap: _pickImage,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                left: 0.0,
+                                right: 4.0,
+                                top: 4.0,
+                                bottom: 4.0,
+                              ),
+                              child: Image.asset(
+                                'assets/images/ImageIcon.png',
+                                width: 25,
+                                height: 25,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          InkWell(
+                            onTap: _showCategorySelection,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Color.fromRGBO(166, 166, 166, 1),
+                                  width: 1.2,
+                                ),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Text(
+                                    '카테고리',
+                                    style: TextStyle(
+                                      color: Color.fromRGBO(166, 166, 166, 1),
+                                      fontSize: 13,
+                                      fontFamily: 'Pretendard',
+                                    ),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Icon(
+                                    Icons.add,
+                                    color: Color.fromRGBO(166, 166, 166, 1),
+                                    size: 16,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -950,7 +956,7 @@ class LinedPaperPainter extends CustomPainter {
     );
 
     // 2. 그 밑으로 본문 밑줄 그리기
-    double currentY = titleHeight + lineHeight;
+    double currentY = titleHeight + lineHeight + 4.0;
 
     // 💡 [이 부분 수정!]
     // size.height 에서 숫자를 빼주면, 바닥에서 그 숫자만큼 띄우고 선 그리기를 멈춥니다.
