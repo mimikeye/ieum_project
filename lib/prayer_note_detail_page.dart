@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pray_write_page.dart';
 import 'prayer_note_service.dart';
+import 'community_selection.dart';
 
 class PrayerNoteDetailPage extends StatefulWidget {
   final Map<String, dynamic> note;
@@ -170,6 +171,119 @@ class _PrayerNoteDetailPageState
     }
   }
 
+    Future<void> _showShareDialog() async {
+      final result = await showDialog<bool>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          return Dialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                24,
+                36,
+                24,
+                36,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '커뮤니티에 게시하시겠습니까?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                      height: 1.5,
+                    ),
+                  ),
+
+                  const SizedBox(height: 21),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 122,
+                        height: 45,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context, true);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color(0xFFEBEBEB),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            '게시',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 24),
+
+                      SizedBox(
+                        width: 122,
+                        height: 45,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context, false);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color(0xFFEBEBEB),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            '취소',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
+      if (result == true) {
+          final selectedCommunities =
+            await showCommunitySelection(
+          context: context,
+        );
+
+        if (selectedCommunities == null ||
+            selectedCommunities.isEmpty) {
+          return;
+        }
+      }
+    }
+
   String _formatDate(String date) {
     if (date.length < 10) return date;
 
@@ -261,7 +375,7 @@ class _PrayerNoteDetailPageState
               }
 
               if (value == 'share') {
-                // 공유 기능은 다음 단계에서 연결
+                await _showShareDialog();
               }
 
               if (value == 'delete') {
