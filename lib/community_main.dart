@@ -97,38 +97,48 @@ class CommunityScreen extends StatelessWidget {
         const SizedBox(width: 8),
 
         // 3. + 동그라미 버튼 (크기 고정)
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: const Color.fromRGBO(234, 248, 203, 0.7),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color.fromRGBO(234, 248, 203, 1),
-              width: 1.0,
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CreateCommunityScreen(),
+              ),
+            );
+          },
+          child: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: const Color.fromRGBO(234, 248, 203, 0.7),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color.fromRGBO(234, 248, 203, 1),
+                width: 1.0,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: 14,
+              height: 14,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 14,
+                    height: 1.7,
+                    color: const Color.fromRGBO(34, 34, 34, 1),
+                  ),
+                  Container(
+                    width: 1.7,
+                    height: 14,
+                    color: const Color.fromRGBO(34, 34, 34, 1),
+                  ),
+                ],
+              ),
             ),
           ),
-          alignment: Alignment.center,
-          child: SizedBox(
-            width: 14,
-            height: 14,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 14,
-                  height: 1.7,
-                  color: const Color.fromRGBO(34, 34, 34, 1),
-                ),
-                Container(
-                  width: 1.7,
-                  height: 14,
-                  color: const Color.fromRGBO(34, 34, 34, 1),
-                ),
-              ],
-            ),
-          ),
-        ),
+        )
       ],
     );
   }
@@ -185,7 +195,7 @@ class CommunityScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 4), // 💡 더보기와 > 사이의 간격
-                    Image.asset('assets/images/뒤로가기11.png',width:10,height:10)
+                    Image.asset('assets/images/right_arrow_mini.png',width:10,height:10)
                   ],
                 ),
               ),
