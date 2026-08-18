@@ -42,6 +42,142 @@ class _PrayerNoteDetailPageState
     });
   }
 
+  Future<void> _deleteNote() async {
+    try {
+      await PrayerNoteService.deletePrayerNote(
+        noteId: widget.noteId,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('기도문을 삭제하지 못했습니다.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showDeleteDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              24,
+              36,
+              24,
+              36,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 삭제 안내 문구
+                const Text(
+                  '이 기도문을 삭제하시겠습니까?\n'
+                  '삭제한 기도문은 복구할 수 없습니다.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.black,
+                    height: 1.5,
+                  ),
+                ),
+
+                const SizedBox(height: 21),
+
+                // 버튼
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                        width: 122,
+                        height: 45,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context, true);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color(0xFFEBEBEB),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            '삭제',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    const SizedBox(width: 24),
+
+                    SizedBox(
+                        width: 122,
+                        height: 45,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context, false);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color(0xFFEBEBEB),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            '취소',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (result == true) {
+      await _deleteNote();
+    }
+  }
+
+  String _formatDate(String date) {
+    if (date.length < 10) return date;
+
+    return '${date.substring(0, 4)}년 '
+        '${int.parse(date.substring(5, 7))}월 '
+        '${int.parse(date.substring(8, 10))}일';
+  }
+
   @override
   Widget build(BuildContext context) {
     final String title = _note['title'] ?? '';
@@ -52,6 +188,8 @@ class _PrayerNoteDetailPageState
 
     final List<String> imageUrls =
         List<String>.from(_note['imageUrls'] ?? []);
+
+    final String date = _note['date'] ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -69,11 +207,11 @@ class _PrayerNoteDetailPageState
             },
           ),
         ),
-        title: const Text(
-          '나의 이음 기도문',
+        title: Text(
+          _formatDate(date),
           style: TextStyle(
             color: Colors.black,
-            fontSize: 21,
+            fontSize: 20,
             fontWeight: FontWeight.w500,
             fontFamily: 'Pretendard',
           ),
@@ -83,35 +221,109 @@ class _PrayerNoteDetailPageState
 
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 21),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: Color(0xFFD9E7BF),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PrayerWriteScreen(
-                        noteId: widget.noteId,
-                        initialNote: _note,
-                      ),
-                    ),
-                  );
+            padding: const EdgeInsets.only(right: 13),
+            child: PopupMenuButton<String>(
+            icon: const Icon(
+              Icons.more_vert,
+              color: Colors.black,
+              size: 26,
+            ),
+            padding: EdgeInsets.zero,
 
-                  await _reloadNote();
-                },
-                icon: const Icon(
-                  Icons.edit_outlined,
-                  color: Colors.white,
-                  size: 20,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+
+            elevation: 4,
+
+            constraints: const BoxConstraints(
+              minWidth: 85,
+              maxWidth: 85,
+            ),
+
+            menuPadding: const EdgeInsets.symmetric(
+              vertical: 8,
+            ),
+
+            onSelected: (value) async {
+              if (value == 'edit') {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PrayerWriteScreen(
+                      noteId: widget.noteId,
+                      initialNote: _note,
+                    ),
+                  ),
+                );
+
+                await _reloadNote();
+              }
+
+              if (value == 'share') {
+                // 공유 기능은 다음 단계에서 연결
+              }
+
+              if (value == 'delete') {
+                await _showDeleteDialog();
+              }
+            },
+
+            itemBuilder: (context) => [
+              const PopupMenuItem<String>(
+                value: 'edit',
+                height: 36,
+                child: Center(
+                  child: Text(
+                    '수정하기',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black,
+                      fontFamily: 'Pretendard',
+                    ),
+                  ),
                 ),
               ),
-            ),
+
+              const PopupMenuDivider(
+                height: 1,
+              ),
+
+              const PopupMenuItem<String>(
+                value: 'share',
+                height: 36,
+                child: Center(
+                  child: Text(
+                    '공유하기',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black,
+                      fontFamily: 'Pretendard',
+                    ),
+                  ),
+                ),
+              ),
+
+              const PopupMenuDivider(
+                height: 1,
+              ),
+
+              const PopupMenuItem<String>(
+                value: 'delete',
+                height: 36,
+                child: Center(
+                  child: Text(
+                    '삭제하기',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.red,
+                      fontFamily: 'Pretendard',
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
           ),
         ],
       ),
@@ -167,7 +379,11 @@ class _PrayerNoteDetailPageState
                                         SizedBox(
                                           height: 50.0,
                                           child: Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                                            padding: const EdgeInsets.only(
+                                              left: 20,
+                                              right: 20,
+                                              top: 8,
+                                            ),
                                             child: Align(
                                               alignment: Alignment.centerLeft,
                                               child: Text(
@@ -265,8 +481,8 @@ class _PrayerNoteDetailPageState
                                             child: Text(
                                               content,
                                               style: const TextStyle(
-                                                fontSize: 14,
-                                                height: 36.0 / 14,
+                                                fontSize: 16,
+                                                height: 36.0 / 16,
                                                 color: Colors.black87,
                                                 fontFamily: 'Pretendard',
                                               ),
@@ -342,7 +558,7 @@ class LinedPaperPainter extends CustomPainter {
     // 💡 [이 부분 수정!]
     // size.height 에서 숫자를 빼주면, 바닥에서 그 숫자만큼 띄우고 선 그리기를 멈춥니다.
     // 숫자를 크게 할수록 밑줄이 일찍 끊겨서 밑줄의 마지막 위치가 위로 올라갑니다! (예: 60, 80, 100 등 자유롭게 조절)
-    final double stopY = size.height + 20.0;
+    final double stopY = size.height;
 
     while (currentY < stopY) {
       canvas.drawLine(

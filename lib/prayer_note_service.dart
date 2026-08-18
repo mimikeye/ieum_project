@@ -185,6 +185,41 @@ class PrayerNoteService {
     });
   }
 
+  static Future<void> deletePrayerNote({
+    required String noteId,
+  }) async {
+    final username = await UserService.getCurrentUsername();
+
+    if (username == null || username.isEmpty) {
+      throw Exception('로그인한 사용자의 username을 찾을 수 없습니다.');
+    }
+
+    final noteRef = _firestore
+        .collection('prayerNotes')
+        .doc(username)
+        .collection('notes')
+        .doc(noteId);
+
+    // 이미지가 있는 경우 Storage에서도 삭제
+    final storageRef = _storage
+        .ref()
+        .child('prayerImages')
+        .child(username)
+        .child(noteId)
+        .child('image.jpg');
+
+    try {
+      await storageRef.delete();
+    } on FirebaseException catch (e) {
+      if (e.code != 'object-not-found') {
+        rethrow;
+      }
+    }
+
+    // Firestore 기도문 삭제
+    await noteRef.delete();
+  }
+
   static Future<QuerySnapshot<Map<String, dynamic>>>
       getPrayerNotes({int? limit}) async {
     final username = await UserService.getCurrentUsername();
