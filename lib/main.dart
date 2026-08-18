@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ieum_project/community_main.dart';
 
 import 'firebase_options.dart';
 import 'login_page.dart';
@@ -136,13 +137,13 @@ class _RootScreenState extends State<RootScreen> {
           // 0. 홈
           // =================================================
 
-          const HomeScreen(),
+          HomeScreen(),
 
           // =================================================
           // 1. 캘린더
           // =================================================
 
-          const CalendarPage(),
+          CalendarPage(),
 
           // =================================================
           // 2. 기도
@@ -154,9 +155,7 @@ class _RootScreenState extends State<RootScreen> {
           // 3. 커뮤니티
           // =================================================
 
-          const Center(
-            child: Text('커뮤니티 화면'),
-          ),
+          CommunityScreen(),
 
           // =================================================
           // 4. 프로필

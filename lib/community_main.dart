@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'community_search.dart';
 import 'community_public_list.dart';
+import 'create_community.dart';
 
 class CommunityScreen extends StatelessWidget {
   const CommunityScreen({super.key});
