@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'community_search.dart';
 import 'community_public_list.dart';
 import 'create_community.dart';
+import 'community_post_detail.dart';
 
 class CommunityScreen extends StatelessWidget {
   const CommunityScreen({super.key});
@@ -26,7 +27,7 @@ class CommunityScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // 2. 이음 기도문 섹션
-                _buildSectionHeader(context, '이음 기도문', hasMore: true),
+                _buildSectionHeader(context, '이음 기도 게시판', hasMore: true),
                 const SizedBox(height: 16),
                 _buildPrayerList(),
 
@@ -242,9 +243,24 @@ class CommunityScreen extends StatelessWidget {
           ),
           itemBuilder: (context, index) {
             final prayer = prayers[index];
-            return Padding(
-              padding: const EdgeInsets.only(left: 11.0),
-              child: Row(
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CommunityPostDetailScreen(
+                      communityName: '이음 기도문 게시판',
+                      title: prayer['title']!,
+                      content: prayer['content']!,
+                      tag: prayer['tag']!,
+                      amenCount: 52,
+                    ),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 11.0),
+                child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
@@ -337,6 +353,7 @@ class CommunityScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
             );
           },
         ),
