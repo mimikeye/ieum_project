@@ -272,16 +272,56 @@ class _PrayerNoteDetailPageState
       );
 
       if (result == true) {
-          final selectedCommunities =
+        final selectedCommunities =
             await showCommunitySelection(
           context: context,
         );
+
+        if (!mounted) return;
 
         if (selectedCommunities == null ||
             selectedCommunities.isEmpty) {
           return;
         }
+
+        _showShareCompleteSnackBar();
       }
+    }
+
+    void _showShareCompleteSnackBar() {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              '공유가 완료되었습니다.',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Pretendard',
+              ),
+            ),
+          
+          backgroundColor: const Color(0xFF555555),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(
+            27,
+            0,
+            27,
+            20,
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 18,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 3),
+          elevation: 0,
+        ),
+      );
     }
 
   String _formatDate(String date) {
