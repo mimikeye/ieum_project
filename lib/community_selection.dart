@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ieum_project/community_service.dart';
 
 Future<Map<String, dynamic>?> showCommunitySelection({
   required BuildContext context,
@@ -29,27 +30,43 @@ class _CommunitySelectionSheetState
 
   bool _isPublicSelected = false;
 
-  final List<Map<String, String>> _joinedCommunities = [
-    {
-      'id': 'community1',
-      'name': '22학번 한동기도클럽',
-    },
-    {
-      'id': 'community2',
-      'name': '북한 중보기도 커뮤니티',
-    },
-    {
-      'id': 'community3',
-      'name': '장성 교회 청년부',
-    },
-    {
-      'id': 'community4',
-      'name': '애국자 기도모임',
-    },
-  ];
+  List<Map<String, dynamic>> _joinedCommunities = [];
+
+  bool _isLoadingCommunities = true;
 
   final String _publicCommunity = '이음 기도 게시판';
-  
+
+  @override
+  void initState() {
+    super.initState();
+    _loadJoinedCommunities();
+  }
+
+  Future<void> _loadJoinedCommunities() async {
+    try {
+      final communities =
+          await CommunityService.getMyJoinedCommunities();
+
+      if (!mounted) return;
+
+      setState(() {
+        _joinedCommunities = communities;
+        _isLoadingCommunities = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingCommunities = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('가입한 커뮤니티를 불러오지 못했습니다.'),
+        ),
+      );
+    }
+  }
 
   void _toggleCommunity(String communityId) {
     setState(() {
@@ -173,82 +190,110 @@ class _CommunitySelectionSheetState
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
-                  22,
+                  20,
                   22,
                   22,
                   40,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // -------------------------
-                    // 전체 커뮤니티
-                    // -------------------------
-                    const Text(
-                      '전체 커뮤니티',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                        fontFamily: 'Pretendard',
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    SizedBox(
-                      width: 110,
-                      height: 110,
-                      child: GestureDetector(
-                        onTap: _togglePublicCommunity,
-                        child: _buildCommunityCard(
-                          name: _publicCommunity,
-                          isSelected: _isPublicSelected,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // -------------------------
+                      // 전체 커뮤니티
+                      // -------------------------
+                      const Text(
+                        '전체 커뮤니티',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                          fontFamily: 'Pretendard',
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 58),
-
-                    // -------------------------
-                    // 내가 가입한 커뮤니티
-                    // -------------------------
-                    const Text(
-                      '내가 가입한 커뮤니티',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                        fontFamily: 'Pretendard',
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    Wrap(
-                      spacing: 14,
-                      runSpacing: 14,
-                      children: _joinedCommunities.map((community) {
-                        final communityId = community['id']!;
-                        final communityName = community['name']!;
-
-                        return SizedBox(
-                          width: 110,
-                          height: 110,
+                  
+                      const SizedBox(height: 18),
+                  
+                      SizedBox(
+                        width: 110,
+                        height: 110,
+                        child: GestureDetector(
+                          onTap: _togglePublicCommunity,
                           child: _buildCommunityCard(
-                            name: communityName,
-                            isSelected:
-                                _selectedCommunityIds.contains(
-                              communityId,
-                            ),
-                            onTap: () {
-                              _toggleCommunity(communityId);
-                            },
+                            name: _publicCommunity,
+                            isSelected: _isPublicSelected,
                           ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
+                        ),
+                      ),
+                  
+                      const SizedBox(height: 58),
+                  
+                      // -------------------------
+                      // 내가 가입한 커뮤니티
+                      // -------------------------
+                      const Text(
+                        '내가 가입한 커뮤니티',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                  
+                      const SizedBox(height: 18),
+                  
+                      if (_isLoadingCommunities)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 30),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      else if (_joinedCommunities.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Text(
+                            '가입한 커뮤니티가 없습니다.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                              fontFamily: 'Pretendard',
+                            ),
+                          ),
+                        )
+                      else
+                        Wrap(
+                          alignment: WrapAlignment.start,
+                          runAlignment: WrapAlignment.start,
+                          spacing: 14,
+                          runSpacing: 14,
+                          children: _joinedCommunities.map((community) {
+                            final communityId =
+                                community['communityId'] as String;
+                  
+                            final communityName =
+                                community['communityName'] as String? ?? '';
+                  
+                            return SizedBox(
+                              width: 110,
+                              height: 110,
+                              child: _buildCommunityCard(
+                                name: communityName,
+                                isSelected:
+                                    _selectedCommunityIds.contains(
+                                  communityId,
+                                ),
+                                onTap: () {
+                                  _toggleCommunity(communityId);
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),

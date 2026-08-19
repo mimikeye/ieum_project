@@ -394,6 +394,29 @@ class CommunityService {
     }).toList();
   }
 
+  static Future<List<Map<String, dynamic>>>
+      getMyJoinedCommunities() async {
+    final uid = UserService.currentUid;
+
+    if (uid == null) {
+      throw Exception('로그인한 사용자를 찾을 수 없습니다.');
+    }
+
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('joinedCommunities')
+        .orderBy('joinedAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return {
+        'communityId': doc.id,
+        ...doc.data(),
+      };
+    }).toList();
+  }
+
     /// ============================================================
   /// 현재 사용자가 해당 커뮤니티에 가입했는지 확인
   /// ============================================================
