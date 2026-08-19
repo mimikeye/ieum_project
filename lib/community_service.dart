@@ -410,5 +410,61 @@ class CommunityService {
       transaction.delete(joinedCommunityRef);
     });
   }
+
+  /// ============================================================
+  /// 추천 커뮤니티 가져오기
+  ///
+  /// - 전체 communities 중 최대 6개
+  /// - randomKey 기준으로 랜덤에 가깝게 선택
+  /// ============================================================
+  static Future<List<Map<String, dynamic>>>
+      getRecommendedCommunities() async {
+    final randomValue =
+        DateTime.now().microsecondsSinceEpoch % 1000000 / 1000000;
+
+    final snapshot = await _firestore
+        .collection('communities')
+        .where(
+          'randomKey',
+          isGreaterThanOrEqualTo: randomValue,
+        )
+        .orderBy('randomKey')
+        .limit(6)
+        .get();
+
+    final results = snapshot.docs.map((doc) {
+      return {
+        'communityId': doc.id,
+        ...doc.data(),
+      };
+    }).toList();
+
+    // randomValue 이후에 6개가 안 나오는 경우
+    // 처음부터 다시 가져와 부족한 수를 보충
+    if (results.length < 6) {
+      final remaining = 6 - results.length;
+
+      final firstSnapshot = await _firestore
+          .collection('communities')
+          .orderBy('randomKey')
+          .limit(remaining)
+          .get();
+
+      final existingIds =
+          results.map((e) => e['communityId']).toSet();
+
+      for (final doc in firstSnapshot.docs) {
+        if (!existingIds.contains(doc.id) &&
+            results.length < 6) {
+          results.add({
+            'communityId': doc.id,
+            ...doc.data(),
+          });
+        }
+      }
+    }
+
+    return results;
+  }
 }
 

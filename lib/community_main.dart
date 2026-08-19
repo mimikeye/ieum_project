@@ -4,9 +4,47 @@ import 'community_public_list.dart';
 import 'create_community.dart';
 import 'community_post_detail.dart';
 import 'community_screen.dart';
+import 'community_service.dart';
 
-class CommunityScreen extends StatelessWidget {
+class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
+
+  @override
+  State<CommunityScreen> createState() =>
+      _CommunityScreenState();
+}
+
+class _CommunityScreenState extends State<CommunityScreen> {
+
+  bool _isRecommendedLoading = true;
+
+  List<Map<String, dynamic>> _recommendedCommunities = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecommendedCommunities();
+  }
+
+  Future<void> _loadRecommendedCommunities() async {
+    try {
+      final communities =
+          await CommunityService.getRecommendedCommunities();
+
+      if (!mounted) return;
+
+      setState(() {
+        _recommendedCommunities = communities;
+        _isRecommendedLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isRecommendedLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,29 +76,7 @@ class CommunityScreen extends StatelessWidget {
                 _buildSectionHeader(context, '추천 커뮤니티', hasMore: false),
                 const SizedBox(height: 16),
                 _buildCommunityGrid(),
-
-                const SizedBox(height: 30),
-
-                // Firebase 커뮤니티 테스트용 임시 버튼
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CommunityDetailScreen(
-                            communityId: '8URUbE1LFEmlZK8GN5Hk',
-                            communityName: 'asdf',
-                            description: 'asdfasdfasdfasdfasdfasdfasfasdfasdfasdfasdf',
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('Firebase 테스트 커뮤니티 열기'),
-                  ),
-                ),
-
-                const SizedBox(height: 40), // 하단 여유 공간
+ // 하단 여유 공간
               ],
             ),
           ), // 👈 Padding 끝
@@ -394,68 +410,117 @@ class CommunityScreen extends StatelessWidget {
   // 추천 커뮤니티 그리드
   // 추천 커뮤니티 그리드 (110x110 정사각형 비율 적용)
   Widget _buildCommunityGrid() {
-    final List<Map<String, String>> communities = [
-      {'title': '마마기도클럽'},
-      {'title': '북한 중보기도\n커뮤니티'},
-      {'title': '동행'},
-      {'title': '청년부 모임'},
-      {'title': '새벽 기도회'},
-      {'title': '중보 기도방'},
-    ];
+    if (_isRecommendedLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 30),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_recommendedCommunities.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Text(
+          '추천할 커뮤니티가 없습니다.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+            fontFamily: 'Pretendard',
+          ),
+        ),
+      );
+    }
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3, // 한 줄에 3개 배치
-        crossAxisSpacing: 9, // 💡 가로 간격 (일반적인 스마트폰 너비에서 아이템 가로가 110이 되도록 간격 조절)
-        mainAxisSpacing: 16, // 세로 줄 간격
-        childAspectRatio: 1.0, // 💡 1:1 비율을 적용하여 완벽한 110x110 정사각형 모양 유지!
+      gridDelegate:
+          const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 9,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.0,
       ),
-      itemCount: communities.length,
+      itemCount: _recommendedCommunities.length,
       itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(
-              10,
-            ), // (모서리 반경: 피그마 수치가 있다면 알려주세요!)
-            // (외곽선: 피그마 수치가 있다면 알려주세요!)
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              // 상단 이미지 영역
-              Expanded(
-                flex: 5, // 이미지와 텍스트 박스의 세로 비율 (수치가 있다면 조절 가능)
-                child: Container(
-                  color: Colors.grey.shade400,
-                  width: double.infinity,
-                  // 실제 이미지 연결 시 아래 코드 사용
-                  // child: Image.network('URL', fit: BoxFit.cover),
+        final community =
+            _recommendedCommunities[index];
+
+        final communityId =
+            community['communityId'] as String;
+
+        final communityName =
+            community['name'] as String? ?? '';
+
+        final imageUrl =
+            community['coverImageUrl'] as String?;
+
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CommunityDetailScreen(
+                  communityId: communityId,
+                  communityName: communityName,
+                  description:
+                      community['description'] as String? ?? '',
                 ),
               ),
-              // 하단 텍스트 영역
-              Expanded(
-                flex: 4,
-                child: Container(
-                  width: double.infinity,
-                  color: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  alignment: Alignment.center,
-                  child: Text(
-                    communities[index]['title']!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.black,
-                      height: 1.2,
-                      fontWeight: .w400,
-                      fontFamily: 'Pretendard',
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: imageUrl != null &&
+                          imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey.shade400,
+                            );
+                          },
+                        )
+                      : Container(
+                          color: Colors.grey.shade400,
+                        ),
+                ),
+
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    width: double.infinity,
+                    color: Colors.transparent,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4),
+                    alignment: Alignment.center,
+                    child: Text(
+                      communityName,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black,
+                        height: 1.2,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Pretendard',
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
