@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-Future<List<String>?> showCommunitySelection({
+Future<Map<String, dynamic>?> showCommunitySelection({
   required BuildContext context,
 }) async {
-  return await showModalBottomSheet<List<String>>(
+  return await showModalBottomSheet<Map<String, dynamic>>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -25,37 +25,61 @@ class CommunitySelectionSheet extends StatefulWidget {
 
 class _CommunitySelectionSheetState
     extends State<CommunitySelectionSheet> {
-  final List<String> _selectedCommunities = [];
+  final List<String> _selectedCommunityIds = [];
 
-  // 현재는 Firebase 연결 전이므로 임시 데이터 사용
-  final List<String> _joinedCommunities = [
-    '22학번 한동기도클럽',
-    '북한 중보기도 커뮤니티',
-    '장성 교회 청년부',
-    '애국자 기도모임',
+  bool _isPublicSelected = false;
+
+  final List<Map<String, String>> _joinedCommunities = [
+    {
+      'id': 'community1',
+      'name': '22학번 한동기도클럽',
+    },
+    {
+      'id': 'community2',
+      'name': '북한 중보기도 커뮤니티',
+    },
+    {
+      'id': 'community3',
+      'name': '장성 교회 청년부',
+    },
+    {
+      'id': 'community4',
+      'name': '애국자 기도모임',
+    },
   ];
 
   final String _publicCommunity = '이음 기도 게시판';
   
 
-  void _toggleCommunity(String community) {
+  void _toggleCommunity(String communityId) {
     setState(() {
-      if (_selectedCommunities.contains(community)) {
-        _selectedCommunities.remove(community);
+      if (_selectedCommunityIds.contains(communityId)) {
+        _selectedCommunityIds.remove(communityId);
       } else {
-        _selectedCommunities.add(community);
+        _selectedCommunityIds.add(communityId);
       }
     });
   }
 
+  void _togglePublicCommunity() {
+    setState(() {
+      _isPublicSelected = !_isPublicSelected;
+    });
+  }
+
   void _confirmSelection() {
-    if (_selectedCommunities.isEmpty) {
+    if (_selectedCommunityIds.isEmpty &&
+        !_isPublicSelected) {
       return;
     }
 
     Navigator.pop(
       context,
-      List<String>.from(_selectedCommunities),
+      {
+        'communityIds':
+            List<String>.from(_selectedCommunityIds),
+        'publishToPublic': _isPublicSelected,
+      },
     );
   }
 
@@ -97,30 +121,37 @@ class _CommunitySelectionSheetState
                     child: Padding(
                       padding: const EdgeInsets.only(right: 18),
                       child: GestureDetector(
-                        onTap: _selectedCommunities.isEmpty
+                        onTap: (_selectedCommunityIds.isEmpty &&
+                                !_isPublicSelected)
                             ? () {
                                 Navigator.pop(context);
                               }
                             : _confirmSelection,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
-                          width: _selectedCommunities.isEmpty ? 40 : 68,
+                          width: (_selectedCommunityIds.isEmpty &&
+                                  !_isPublicSelected)
+                              ? 40
+                              : 68,
                           height: 40,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: _selectedCommunities.isEmpty
+                            color: (_selectedCommunityIds.isEmpty &&
+                                    !_isPublicSelected)
                                 ? const Color(0xFFD9D9D9)
                                 : const Color(0xFFEAF8CB),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: _selectedCommunities.isEmpty
+                          child: (_selectedCommunityIds.isEmpty &&
+                                  !_isPublicSelected)
                               ? const Icon(
                                   Icons.close,
                                   color: Colors.white,
                                   size: 26,
                                 )
                               : Text(
-                                  '${_selectedCommunities.length} 확인',
+                                  '${_selectedCommunityIds.length +
+                                      (_isPublicSelected ? 1 : 0)} 확인',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
@@ -168,11 +199,11 @@ class _CommunitySelectionSheetState
                     SizedBox(
                       width: 110,
                       height: 110,
-                      child: _buildCommunityCard(
-                        name: _publicCommunity,
-                        isSelected:
-                            _selectedCommunities.contains(
-                          _publicCommunity,
+                      child: GestureDetector(
+                        onTap: _togglePublicCommunity,
+                        child: _buildCommunityCard(
+                          name: _publicCommunity,
+                          isSelected: _isPublicSelected,
                         ),
                       ),
                     ),
@@ -198,15 +229,21 @@ class _CommunitySelectionSheetState
                       spacing: 14,
                       runSpacing: 14,
                       children: _joinedCommunities.map((community) {
+                        final communityId = community['id']!;
+                        final communityName = community['name']!;
+
                         return SizedBox(
                           width: 110,
                           height: 110,
                           child: _buildCommunityCard(
-                            name: community,
+                            name: communityName,
                             isSelected:
-                                _selectedCommunities.contains(
-                              community,
+                                _selectedCommunityIds.contains(
+                              communityId,
                             ),
+                            onTap: () {
+                              _toggleCommunity(communityId);
+                            },
                           ),
                         );
                       }).toList(),
@@ -254,9 +291,10 @@ class _CommunitySelectionSheetState
   Widget _buildCommunityCard({
     required String name,
     required bool isSelected,
+    VoidCallback? onTap,
   }) {
     return GestureDetector(
-      onTap: () => _toggleCommunity(name),
+      onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           color: isSelected

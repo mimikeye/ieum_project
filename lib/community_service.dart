@@ -202,6 +202,92 @@ class CommunityService {
     return communityId;
   }
 
+  static Future<String> createPost({
+    required String title,
+    required String content,
+    required String category,
+    required List<String> imageUrls,
+  }) async {
+    final uid = UserService.currentUid;
+
+    if (uid == null) {
+      throw Exception('로그인한 사용자를 찾을 수 없습니다.');
+    }
+
+    final nickname =
+        await UserService.getCurrentNickname();
+
+    final postRef =
+        _firestore.collection('posts').doc();
+
+    final now = Timestamp.now();
+
+    await postRef.set({
+      'title': title.trim(),
+      'content': content.trim(),
+      'authorUid': uid,
+      'authorNickname': nickname,
+      'category': category,
+      'imageUrls': imageUrls,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    return postRef.id;
+  }
+
+  static Future<void> publishPost({
+    required String postId,
+    required List<String> communityIds,
+    required bool publishToPublic,
+  }) async {
+    final postSnapshot = await _firestore
+        .collection('posts')
+        .doc(postId)
+        .get();
+
+    if (!postSnapshot.exists) {
+      throw Exception('게시글을 찾을 수 없습니다.');
+    }
+
+    final postData = postSnapshot.data();
+
+    if (postData == null) {
+      throw Exception('게시글 데이터를 읽을 수 없습니다.');
+    }
+
+    final batch = _firestore.batch();
+
+    for (final communityId in communityIds) {
+      final ref = _firestore
+          .collection('communities')
+          .doc(communityId)
+          .collection('posts')
+          .doc(postId);
+
+      batch.set(ref, {
+        ...postData,
+        'originalPostId': postId,
+        'amenCount': 0,
+        'isNotice': false,
+      });
+    }
+
+    if (publishToPublic) {
+      final publicRef = _firestore
+          .collection('publicPosts')
+          .doc(postId);
+
+      batch.set(publicRef, {
+        ...postData,
+        'originalPostId': postId,
+        'amenCount': 0,
+      });
+    }
+
+    await batch.commit();
+  }
+
   /// ============================================================
   /// 커뮤니티 1개 가져오기
   /// ============================================================
@@ -289,30 +375,21 @@ class CommunityService {
   /// 모든 커뮤니티의 posts를 대상으로
   /// 최신순으로 최대 3개를 가져옵니다.
   /// ============================================================
-  static Future<List<Map<String, dynamic>>> getLatestPublicPosts() async {
+  static Future<List<Map<String, dynamic>>>
+      getLatestPublicPosts() async {
     final snapshot = await _firestore
-        .collectionGroup('posts')
-        .orderBy('createdAt', descending: true)
+        .collection('publicPosts')
+        .orderBy(
+          'createdAt',
+          descending: true,
+        )
         .limit(3)
         .get();
 
     return snapshot.docs.map((doc) {
-      final data = doc.data();
-
-      // communities/{communityId}/posts/{postId}
-      final communityId = doc.reference.parent.parent!.id;
-
       return {
         'postId': doc.id,
-        'communityId': communityId,
-        'title': data['title'] ?? '',
-        'content': data['content'] ?? '',
-        'category': data['category'] ?? '기도',
-        'amenCount': data['amenCount'] ?? 0,
-        'authorUid': data['authorUid'] ?? '',
-        'authorNickname': data['authorNickname'] ?? '',
-        'imageUrls': data['imageUrls'] ?? [],
-        'createdAt': data['createdAt'],
+        ...doc.data(),
       };
     }).toList();
   }
