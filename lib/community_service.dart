@@ -412,6 +412,43 @@ class CommunityService {
   }
 
   /// ============================================================
+  /// 커뮤니티 검색
+  ///
+  /// 커뮤니티 이름을 기준으로 검색
+  /// - nameLower를 사용하여 대소문자 구분 없이 검색
+  /// - 검색어로 시작하는 커뮤니티를 최대 20개 가져옴
+  /// ============================================================
+  static Future<List<Map<String, dynamic>>> searchCommunities({
+    required String keyword,
+  }) async {
+    final searchKeyword = keyword.trim().toLowerCase();
+
+    if (searchKeyword.isEmpty) {
+      return [];
+    }
+
+    final snapshot = await _firestore
+        .collection('communities')
+        .where(
+          'nameLower',
+          isGreaterThanOrEqualTo: searchKeyword,
+        )
+        .where(
+          'nameLower',
+          isLessThan: '$searchKeyword\uf8ff',
+        )
+        .limit(20)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return {
+        'communityId': doc.id,
+        ...doc.data(),
+      };
+    }).toList();
+  }
+
+  /// ============================================================
   /// 추천 커뮤니티 가져오기
   ///
   /// - 전체 communities 중 최대 6개

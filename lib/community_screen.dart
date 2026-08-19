@@ -69,6 +69,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
       setState(() {
         _communityData = community;
+        _isMember = isMember;
         _noticeData = notice;
         _latestPosts = latestPosts;
         _isLoading = false;
@@ -214,16 +215,44 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 Container(
                   width: double.infinity,
                   height: 210,
-                  decoration: BoxDecoration(color: Colors.grey.shade300),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                  ),
                   child: widget.coverImage != null
                       ? Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.file(widget.coverImage!, fit: BoxFit.cover),
-                            Container(color: Colors.white.withOpacity(0.4)),
+                            Image.file(
+                              widget.coverImage!,
+                              fit: BoxFit.cover,
+                            ),
+                            Container(
+                              color: Colors.white.withOpacity(0.4),
+                            ),
                           ],
                         )
-                      : null,
+                      : (_communityData?['coverImageUrl'] as String?) != null &&
+                              (_communityData?['coverImageUrl'] as String?)
+                                  !.isNotEmpty
+                          ? Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.network(
+                                  _communityData!['coverImageUrl'],
+                                  fit: BoxFit.cover,
+                                  errorBuilder:
+                                      (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey.shade300,
+                                    );
+                                  },
+                                ),
+                                Container(
+                                  color: Colors.white.withOpacity(0.4),
+                                ),
+                              ],
+                            )
+                          : null,
                 ),
                 // 안전 영역 내 뒤로가기/설정 버튼
                 SafeArea(
