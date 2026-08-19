@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ieum_project/community_screen.dart';
 import 'package:image_picker/image_picker.dart'; // 💡 이미지 피커 추가
 import 'dart:io'; // 💡 File 객체 사용을 위해 추가
+import 'package:ieum_project/community_service.dart';
 
 class CreateCommunityScreen extends StatefulWidget {
   const CreateCommunityScreen({super.key});
@@ -50,6 +51,46 @@ void _checkModifications() {
       setState(() {
         _selectedImage = image;
       });
+    }
+  }
+
+  Future<void> _createCommunity() async {
+    if (!_isModified) {
+      return;
+    }
+
+    try {
+      final communityId =
+          await CommunityService.createCommunity(
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        coverImage: _selectedImage != null
+            ? File(_selectedImage!.path)
+            : null,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CommunityDetailScreen(
+            coverImage: _selectedImage != null
+                ? File(_selectedImage!.path)
+                : null,
+            communityName: _nameController.text.trim(),
+            description: _descriptionController.text.trim(),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('커뮤니티 생성에 실패했습니다.'),
+        ),
+      );
     }
   }
 
@@ -216,24 +257,8 @@ void _checkModifications() {
                 height: 38,
                 child: InkWell(
                   onTap: _isModified
-                      ? () {
-                          // 💡 새로 변경된 이동 로직: 사용자가 입력한 데이터를 파라미터로 넘겨줍니다!
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CommunityDetailScreen(
-                                // 사진이 선택되었다면 File 객체로 변환해서 넘김
-                                coverImage: _selectedImage != null
-                                    ? File(_selectedImage!.path)
-                                    : null,
-                                // 입력창의 텍스트 값을 넘김
-                                communityName: _nameController.text,
-                                description: _descriptionController.text,
-                              ),
-                            ),
-                          );
-                        }
-                      : null,
+                    ? _createCommunity
+                    : null,
                   customBorder: const CircleBorder(),
                   child: Container(
                     decoration: BoxDecoration(
