@@ -13,6 +13,67 @@ class CommunityService {
       FirebaseStorage.instance;
 
   /// ============================================================
+  /// 전체 커뮤니티의 게시글 가져오기
+  ///
+  /// communities/{communityId}/posts
+  /// 하위의 모든 posts를 한 번에 조회
+  ///
+  /// sortBy:
+  /// - 'latest' : 최신순
+  /// - 'popular': 아멘 개수순
+  /// ============================================================
+  static Future<List<Map<String, dynamic>>> getAllPosts({
+    String sortBy = 'latest',
+    String? category,
+  }) async {
+    Query query = _firestore
+        .collectionGroup('posts');
+
+    // ------------------------------------------------------------
+    // 카테고리 필터
+    // ------------------------------------------------------------
+    if (category != null && category.isNotEmpty) {
+      query = query.where(
+        'category',
+        isEqualTo: category,
+      );
+    }
+
+    // ------------------------------------------------------------
+    // 정렬
+    // ------------------------------------------------------------
+    if (sortBy == 'popular') {
+      query = query.orderBy(
+        'amenCount',
+        descending: true,
+      );
+    } else {
+      query = query.orderBy(
+        'createdAt',
+        descending: true,
+      );
+    }
+
+    final snapshot = await query.get();
+
+    return snapshot.docs.map((doc) {
+      final data =
+          doc.data() as Map<String, dynamic>;
+
+      return {
+        'postId': doc.id,
+
+        // 어느 커뮤니티의 글인지 알아야
+        // 상세 페이지로 이동할 때 사용할 수 있음
+        'communityId':
+            doc.reference.parent.parent?.id,
+
+        ...data,
+      };
+    }).toList();
+  }
+
+  /// ============================================================
   /// 커뮤니티 생성
   ///
   /// 처리 순서:

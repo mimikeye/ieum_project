@@ -158,6 +158,8 @@ class _CommunitySearchScreenState
 
                         autofocus: true,
 
+                        onChanged: _searchCommunities,
+
                         onSubmitted: _searchCommunities,
 
                         cursorColor:
@@ -383,8 +385,8 @@ class _CommunitySearchScreenState
                 // =================================================
 
                 Container(
-                  width: 70,
-                  height: 70,
+                  width: 95,
+                  height: 95,
 
                   decoration:
                       BoxDecoration(
@@ -393,7 +395,7 @@ class _CommunitySearchScreenState
                     ),
                     borderRadius:
                         BorderRadius.circular(
-                      8,
+                      14,
                     ),
                   ),
 
@@ -456,7 +458,7 @@ class _CommunitySearchScreenState
                             const TextStyle(
                           fontSize: 16,
                           fontWeight:
-                              FontWeight.w500,
+                              FontWeight.w700,
                           color: Colors.black,
                           fontFamily:
                               'Pretendard',
@@ -464,7 +466,7 @@ class _CommunitySearchScreenState
                       ),
 
                       const SizedBox(
-                        height: 5,
+                        height: 6,
                       ),
 
                       Text(
@@ -477,7 +479,7 @@ class _CommunitySearchScreenState
 
                         style:
                             const TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           color:
                               Color(0xFF666666),
                           height: 1.3,
@@ -487,7 +489,7 @@ class _CommunitySearchScreenState
                       ),
 
                       const SizedBox(
-                        height: 5,
+                        height: 10,
                       ),
 
                       Text(
@@ -508,11 +510,11 @@ class _CommunitySearchScreenState
 
                 const SizedBox(width: 8),
 
-                const Icon(
+                /*const Icon(
                   Icons.chevron_right,
                   color: Color(0xFF999999),
                   size: 22,
-                ),
+                ),*/
               ],
             ),
           ),
