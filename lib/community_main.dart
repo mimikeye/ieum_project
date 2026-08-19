@@ -3,6 +3,7 @@ import 'community_search.dart';
 import 'community_public_list.dart';
 import 'create_community.dart';
 import 'community_post_detail.dart';
+import 'community_screen.dart';
 
 class CommunityScreen extends StatelessWidget {
   const CommunityScreen({super.key});
@@ -37,6 +38,27 @@ class CommunityScreen extends StatelessWidget {
                 _buildSectionHeader(context, '추천 커뮤니티', hasMore: false),
                 const SizedBox(height: 16),
                 _buildCommunityGrid(),
+
+                const SizedBox(height: 30),
+
+                // Firebase 커뮤니티 테스트용 임시 버튼
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CommunityDetailScreen(
+                            communityId: '8URUbE1LFEmlZK8GN5Hk',
+                            communityName: 'asdf',
+                            description: 'asdfasdfasdfasdfasdfasdfasfasdfasdfasdfasdf',
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('Firebase 테스트 커뮤니티 열기'),
+                  ),
+                ),
 
                 const SizedBox(height: 40), // 하단 여유 공간
               ],

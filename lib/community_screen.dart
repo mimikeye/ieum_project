@@ -31,6 +31,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   bool _isLoading = true;
 
+  bool _isMember = false;
+
   Map<String, dynamic>? _communityData;
   Map<String, dynamic>? _noticeData;
   List<Map<String, dynamic>> _latestPosts = [];
@@ -45,6 +47,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     try {
       final community =
           await CommunityService.getCommunity(
+        communityId: widget.communityId,
+      );
+
+      final isMember =
+          await CommunityService.isMember(
         communityId: widget.communityId,
       );
 
@@ -76,6 +83,103 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('커뮤니티 정보를 불러오지 못했습니다.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _joinCommunity() async {
+    try {
+      await CommunityService.joinCommunity(
+        communityId: widget.communityId,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isMember = true;
+
+        if (_communityData != null) {
+          _communityData!['memberCount'] =
+              (_communityData!['memberCount'] ?? 0) + 1;
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('커뮤니티에 가입했습니다.'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('커뮤니티 가입에 실패했습니다.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _leaveCommunity() async {
+    final shouldLeave = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('커뮤니티 탈퇴'),
+          content: const Text(
+            '정말 이 커뮤니티에서 탈퇴하시겠습니까?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              child: const Text('탈퇴'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLeave != true) return;
+
+    try {
+      await CommunityService.leaveCommunity(
+        communityId: widget.communityId,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isMember = false;
+
+        if (_communityData != null) {
+          final currentCount =
+              _communityData!['memberCount'] ?? 0;
+
+          _communityData!['memberCount'] =
+              currentCount > 0 ? currentCount - 1 : 0;
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('커뮤니티에서 탈퇴했습니다.'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('커뮤니티 탈퇴에 실패했습니다.'),
         ),
       );
     }
@@ -138,21 +242,51 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                             color: Colors.black,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () {},
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.transparent,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.settings_outlined,
-                              color: Colors.black,
-                              size: 24,
-                            ),
-                          ),
-                        ),
+                        _isMember
+                            ? PopupMenuButton<String>(
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  color: Colors.black,
+                                  size: 26,
+                                ),
+                                onSelected: (value) {
+                                  if (value == 'leave') {
+                                    _leaveCommunity();
+                                  }
+                                },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem<String>(
+                                    value: 'leave',
+                                    child: Text(
+                                      '커뮤니티 탈퇴',
+                                      style: TextStyle(
+                                        fontFamily: 'Pretendard',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : GestureDetector(
+                                onTap: _joinCommunity,
+                                child: Container(
+                                  width: 70,
+                                  height: 32,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEAF8CB),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Text(
+                                    '가입하기',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.black,
+                                      fontFamily: 'Pretendard',
+                                    ),
+                                  ),
+                                ),
+                              ),
                       ],
                     ),
                   ),

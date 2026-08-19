@@ -221,4 +221,194 @@ class CommunityService {
       };
     }).toList();
   }
+
+    /// ============================================================
+  /// 현재 사용자가 해당 커뮤니티에 가입했는지 확인
+  /// ============================================================
+  static Future<bool> isMember({
+    required String communityId,
+  }) async {
+    final uid = UserService.currentUid;
+
+    if (uid == null) {
+      return false;
+    }
+
+    final memberDoc = await _firestore
+        .collection('communities')
+        .doc(communityId)
+        .collection('members')
+        .doc(uid)
+        .get();
+
+    return memberDoc.exists;
+  }
+
+    /// ============================================================
+  /// 커뮤니티 가입
+  ///
+  /// 처리:
+  /// 1. 현재 사용자가 이미 가입했는지 확인
+  /// 2. members에 사용자 추가
+  /// 3. memberCount +1
+  /// 4. users/{uid}/joinedCommunities에 추가
+  /// ============================================================
+  static Future<void> joinCommunity({
+    required String communityId,
+  }) async {
+    final uid = UserService.currentUid;
+
+    if (uid == null) {
+      throw Exception('로그인한 사용자를 찾을 수 없습니다.');
+    }
+
+    final communityRef = _firestore
+        .collection('communities')
+        .doc(communityId);
+
+    final memberRef = communityRef
+        .collection('members')
+        .doc(uid);
+
+    final joinedCommunityRef = _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('joinedCommunities')
+        .doc(communityId);
+
+    await _firestore.runTransaction((transaction) async {
+      // ----------------------------------------------------------
+      // 현재 커뮤니티 정보
+      // ----------------------------------------------------------
+      final communitySnapshot =
+          await transaction.get(communityRef);
+
+      if (!communitySnapshot.exists) {
+        throw Exception('존재하지 않는 커뮤니티입니다.');
+      }
+
+      // ----------------------------------------------------------
+      // 이미 가입했는지 확인
+      // ----------------------------------------------------------
+      final memberSnapshot =
+          await transaction.get(memberRef);
+
+      if (memberSnapshot.exists) {
+        return;
+      }
+
+      final communityData =
+          communitySnapshot.data() as Map<String, dynamic>;
+
+      final currentMemberCount =
+          (communityData['memberCount'] ?? 0) as num;
+
+      final now = Timestamp.now();
+
+      // ----------------------------------------------------------
+      // members/{uid} 추가
+      // ----------------------------------------------------------
+      transaction.set(memberRef, {
+        'role': 'member',
+        'joinedAt': now,
+      });
+
+      // ----------------------------------------------------------
+      // memberCount +1
+      // ----------------------------------------------------------
+      transaction.update(communityRef, {
+        'memberCount': currentMemberCount + 1,
+        'updatedAt': now,
+      });
+
+      // ----------------------------------------------------------
+      // users/{uid}/joinedCommunities/{communityId} 추가
+      // ----------------------------------------------------------
+      transaction.set(joinedCommunityRef, {
+        'communityName': communityData['name'] ?? '',
+        'coverImageUrl':
+            communityData['coverImageUrl'],
+        'joinedAt': now,
+      });
+    });
+  }
+
+    /// ============================================================
+  /// 커뮤니티 탈퇴
+  ///
+  /// 처리:
+  /// 1. 현재 사용자의 가입 정보 확인
+  /// 2. members에서 삭제
+  /// 3. memberCount -1
+  /// 4. users/{uid}/joinedCommunities에서 삭제
+  /// ============================================================
+  static Future<void> leaveCommunity({
+    required String communityId,
+  }) async {
+    final uid = UserService.currentUid;
+
+    if (uid == null) {
+      throw Exception('로그인한 사용자를 찾을 수 없습니다.');
+    }
+
+    final communityRef = _firestore
+        .collection('communities')
+        .doc(communityId);
+
+    final memberRef = communityRef
+        .collection('members')
+        .doc(uid);
+
+    final joinedCommunityRef = _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('joinedCommunities')
+        .doc(communityId);
+
+    await _firestore.runTransaction((transaction) async {
+      final communitySnapshot =
+          await transaction.get(communityRef);
+
+      if (!communitySnapshot.exists) {
+        throw Exception('존재하지 않는 커뮤니티입니다.');
+      }
+
+      final memberSnapshot =
+          await transaction.get(memberRef);
+
+      if (!memberSnapshot.exists) {
+        return;
+      }
+
+      final communityData =
+          communitySnapshot.data() as Map<String, dynamic>;
+
+      final currentMemberCount =
+          (communityData['memberCount'] ?? 0) as num;
+
+      final now = Timestamp.now();
+
+      // ----------------------------------------------------------
+      // members/{uid} 삭제
+      // ----------------------------------------------------------
+      transaction.delete(memberRef);
+
+      // ----------------------------------------------------------
+      // memberCount -1
+      // ----------------------------------------------------------
+      transaction.update(communityRef, {
+        'memberCount':
+            currentMemberCount > 0
+                ? currentMemberCount - 1
+                : 0,
+        'updatedAt': now,
+      });
+
+      // ----------------------------------------------------------
+      // users/{uid}/joinedCommunities/{communityId} 삭제
+      // ----------------------------------------------------------
+      transaction.delete(joinedCommunityRef);
+    });
+  }
 }
+
