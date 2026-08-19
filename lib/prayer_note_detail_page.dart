@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'pray_write_page.dart';
 import 'prayer_note_service.dart';
 import 'community_selection.dart';
+import 'community_service.dart';
 
 class PrayerNoteDetailPage extends StatefulWidget {
   final Map<String, dynamic> note;
@@ -272,20 +273,63 @@ class _PrayerNoteDetailPageState
       );
 
       if (result == true) {
-        final selectedCommunities =
-            await showCommunitySelection(
-          context: context,
+      final selectionResult = await showCommunitySelection(
+        context: context,
+      );
+
+      if (!mounted) return;
+
+      if (selectionResult == null) {
+        return;
+      }
+
+      final List<String> communityIds =
+          List<String>.from(
+        selectionResult['communityIds'] ?? [],
+      );
+
+      final bool publishToPublic =
+          selectionResult['publishToPublic'] == true;
+
+      if (communityIds.isEmpty && !publishToPublic) {
+        return;
+      }
+
+      try {
+        // 1. 기도문의 원본 게시글 생성
+        final postId = await CommunityService.createPost(
+          title: _note['title'] ?? '',
+          content: _note['content'] ?? '',
+          category: (_note['categories'] as List?)
+                  ?.isNotEmpty ==
+              true
+              ? (_note['categories'] as List).first.toString()
+              : '기도',
+          imageUrls: List<String>.from(
+            _note['imageUrls'] ?? [],
+          ),
+        );
+
+        // 2. 선택한 게시판에 실제 게시
+        await CommunityService.publishPost(
+          postId: postId,
+          communityIds: communityIds,
+          publishToPublic: publishToPublic,
         );
 
         if (!mounted) return;
 
-        if (selectedCommunities == null ||
-            selectedCommunities.isEmpty) {
-          return;
-        }
-
         _showShareCompleteSnackBar();
+      } catch (e) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('게시하지 못했습니다.'),
+          ),
+        );
       }
+    }
     }
 
     void _showShareCompleteSnackBar() {

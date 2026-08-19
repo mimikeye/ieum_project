@@ -394,6 +394,63 @@ class CommunityService {
     }).toList();
   }
 
+  /// ============================================================
+  /// 이음 기도 게시판 전체 글 가져오기
+  ///
+  /// publicPosts에 게시된 모든 글을 가져옵니다.
+  /// sortBy:
+  /// - 'latest' : 최신순
+  /// - 'popular': 아멘 개수순
+  /// category:
+  /// - 특정 카테고리만 조회
+  /// - null이면 전체 카테고리
+  /// ============================================================
+  static Future<List<Map<String, dynamic>>>
+      getAllPublicPosts({
+    String sortBy = 'latest',
+    String? category,
+  }) async {
+    Query query = _firestore
+        .collection('publicPosts');
+
+    // ------------------------------------------------------------
+    // 카테고리 필터
+    // ------------------------------------------------------------
+    if (category != null && category.isNotEmpty) {
+      query = query.where(
+        'category',
+        isEqualTo: category,
+      );
+    }
+
+    // ------------------------------------------------------------
+    // 정렬
+    // ------------------------------------------------------------
+    if (sortBy == 'popular') {
+      query = query.orderBy(
+        'amenCount',
+        descending: true,
+      );
+    } else {
+      query = query.orderBy(
+        'createdAt',
+        descending: true,
+      );
+    }
+
+    final snapshot = await query.get();
+
+    return snapshot.docs.map((doc) {
+      final data =
+          doc.data() as Map<String, dynamic>;
+
+      return {
+        'postId': doc.id,
+        ...data,
+      };
+    }).toList();
+  }
+
   static Future<List<Map<String, dynamic>>>
       getMyJoinedCommunities() async {
     final uid = UserService.currentUid;

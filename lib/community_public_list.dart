@@ -25,7 +25,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
 
   Future<void> _loadPosts() async {
     try {
-      final posts = await CommunityService.getAllPosts(
+      final posts = await CommunityService.getAllPublicPosts(
         sortBy: 'latest',
       );
 
