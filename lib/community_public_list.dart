@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'category_selection.dart';
+import 'community_service.dart';
+import 'community_post_detail.dart';
 
 class PrayerDetailScreen extends StatefulWidget {
   const PrayerDetailScreen({super.key});
@@ -10,7 +12,43 @@ class PrayerDetailScreen extends StatefulWidget {
 
 class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
   // 💡 디폴트 상태: 아무것도 선택되지 않은 상태("")로 시작합니다.
-  String selectedTag = ""; 
+  String selectedTag = "";
+
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _posts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPosts();
+  }
+
+  Future<void> _loadPosts() async {
+    try {
+      final posts = await CommunityService.getAllPosts(
+        sortBy: 'latest',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _posts = posts;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('게시글을 불러오지 못했습니다.'),
+        ),
+      );
+    }
+  }
 
   final List<String> tags = ["묵상", "감사", "회개", "중보", "간구", "개인"];
 
@@ -110,14 +148,6 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
 
   // 인기순/최신순 탭 내부 빌드
 Widget _buildPrayerListTab() {
-    final List<Map<String, String>> prayers = List.generate(8, (index) => {
-      'title': index % 2 == 0 ? '가족을 위한 기도' : '회개 기도',
-      'content': index % 2 == 0 
-          ? '사랑이 많으신 하나님 아버지,\n오늘도 저희 가족을 지켜주시고...'
-          : '죄인인 저를 사랑한다 말하시는 하나님 아버지, 저의 죄를 고백합니다. 오늘...',
-      'date': '08.04',
-      'tag': index % 2 == 0 ? '가족' : '회개',
-    });
 
     return Column(
       children: [
@@ -172,22 +202,53 @@ Widget _buildPrayerListTab() {
 
         // 하단 기도문 리스트 및 구분선 (좌우 여백 21.8 정렬)
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(0, 8, 0, 16),
-            itemCount: prayers.length, 
-            // 💡 구분선에도 좌우 여백을 주어 탭 바와 시작/끝점이 정확히 일치하도록 함
-            separatorBuilder: (context, index) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 21.8),
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 16),
-                height: 1,
-                color: const Color.fromRGBO(238, 238, 238, 1),
-              ),
-            ),
-            itemBuilder: (context, index) {
-              return _buildDetailPrayerCard(prayers[index]); 
-            },
-          ),
+          child: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(),
+                )
+              : _posts.isEmpty
+                  ? const Center(
+                      child: Text(
+                        '아직 작성된 기도문이 없습니다.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(
+                        0,
+                        8,
+                        0,
+                        16,
+                      ),
+                      itemCount: _posts.length,
+                      separatorBuilder: (context, index) =>
+                          Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 21.8,
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 16,
+                          ),
+                          height: 1,
+                          color: const Color.fromRGBO(
+                            238,
+                            238,
+                            238,
+                            1,
+                          ),
+                        ),
+                      ),
+                      itemBuilder: (context, index) {
+                        return _buildDetailPrayerCard(
+                          _posts[index],
+                        );
+                      },
+                    ),
         ),
       ],
     );
@@ -240,104 +301,139 @@ Widget _buildPrayerListTab() {
     );
   }
 
-Widget _buildDetailPrayerCard(Map<String, String> prayer) {
-    return Padding(
-      // 💡 양옆 여백을 21.8로 통일하여 탭 바 라인과 완벽하게 수직 정렬
-      padding: const EdgeInsets.symmetric(horizontal: 21.8), 
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 6),
-                Text(
-                  prayer['title']!,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                    fontFamily: 'Pretendard',
-                  ),
-                ),
-                
-                const SizedBox(height: 7),
-                
-                Text(
-                  prayer['content']!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black87,
-                    fontFamily: 'Pretendard',
-                    height: 1.3,
-                  ),
-                ),
-                
-                const SizedBox(height: 5),
-                
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      prayer['date']!,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                        color: Color.fromRGBO(113, 113, 113, 1),
-                        fontFamily: 'Pretendard',
-                      ),
+  Widget _buildDetailPrayerCard(
+    Map<String, dynamic> prayer,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        final communityId =
+            prayer['communityId'] as String? ?? '';
+
+        final postId =
+            prayer['postId'] as String? ?? '';
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CommunityPostDetailScreen(
+              communityId: communityId,
+              postId: postId,
+              communityName:
+                  prayer['communityName'] as String? ?? '이음 기도문',
+              title:
+                  prayer['title'] as String? ?? '',
+              content:
+                  prayer['content'] as String? ?? '',
+              tag:
+                  prayer['category'] as String? ?? '',
+              amenCount:
+                  prayer['amenCount'] as int? ?? 0,
+            ),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 21.8,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 6),
+
+                  Text(
+                    prayer['title'] as String? ?? '',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                      fontFamily: 'Pretendard',
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 1,
-                      height: 11,
-                      color: const Color.fromRGBO(113, 113, 113, 1),
+                  ),
+
+                  const SizedBox(height: 7),
+
+                  Text(
+                    prayer['content'] as String? ?? '',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black87,
+                      fontFamily: 'Pretendard',
+                      height: 1.3,
                     ),
-                    const SizedBox(width: 5),
-                    Container(
-                      width: 35,
-                      height: 17,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: const Color.fromRGBO(166, 166, 166, 1),
-                          width: 0.5,
-                        ),
-                        borderRadius: BorderRadius.circular(13.4),
-                      ),
-                      child: Text(
-                        prayer['tag']!,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: Color.fromRGBO(166, 166, 166, 1),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  Row(
+                    children: [
+                      const Text(
+                        '최근',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF717171),
                           fontFamily: 'Pretendard',
-                          height: 1.1,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+
+                      const SizedBox(width: 8),
+
+                      Container(
+                        width: 1,
+                        height: 11,
+                        color: const Color(0xFF717171),
+                      ),
+
+                      const SizedBox(width: 5),
+
+                      Container(
+                        width: 35,
+                        height: 17,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: const Color(0xFFA6A6A6),
+                            width: 0.5,
+                          ),
+                          borderRadius:
+                              BorderRadius.circular(13.4),
+                        ),
+                        child: Text(
+                          prayer['category'] as String? ?? '',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFA6A6A6),
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          
-          const SizedBox(width: 13), // 텍스트와 이미지 사이의 간격
-          
-          // 우측 이미지 영역
-          Container(
-            width: 95,
-            height: 95,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(7),
+
+            const SizedBox(width: 13),
+
+            Container(
+              width: 95,
+              height: 95,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius:
+                    BorderRadius.circular(7),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -283,6 +283,40 @@ class CommunityService {
     }).toList();
   }
 
+  /// ============================================================
+  /// 이음 기도 게시판 최신 글 3개
+  ///
+  /// 모든 커뮤니티의 posts를 대상으로
+  /// 최신순으로 최대 3개를 가져옵니다.
+  /// ============================================================
+  static Future<List<Map<String, dynamic>>> getLatestPublicPosts() async {
+    final snapshot = await _firestore
+        .collectionGroup('posts')
+        .orderBy('createdAt', descending: true)
+        .limit(3)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+
+      // communities/{communityId}/posts/{postId}
+      final communityId = doc.reference.parent.parent!.id;
+
+      return {
+        'postId': doc.id,
+        'communityId': communityId,
+        'title': data['title'] ?? '',
+        'content': data['content'] ?? '',
+        'category': data['category'] ?? '기도',
+        'amenCount': data['amenCount'] ?? 0,
+        'authorUid': data['authorUid'] ?? '',
+        'authorNickname': data['authorNickname'] ?? '',
+        'imageUrls': data['imageUrls'] ?? [],
+        'createdAt': data['createdAt'],
+      };
+    }).toList();
+  }
+
     /// ============================================================
   /// 현재 사용자가 해당 커뮤니티에 가입했는지 확인
   /// ============================================================

@@ -5,6 +5,7 @@ import 'create_community.dart';
 import 'community_post_detail.dart';
 import 'community_screen.dart';
 import 'community_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -20,10 +21,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   List<Map<String, dynamic>> _recommendedCommunities = [];
 
+  bool _isPrayerLoading = true;
+
+  List<Map<String, dynamic>> _latestPublicPosts = [];
+
   @override
   void initState() {
     super.initState();
+
     _loadRecommendedCommunities();
+    _loadLatestPublicPosts();
   }
 
   Future<void> _loadRecommendedCommunities() async {
@@ -43,6 +50,28 @@ class _CommunityScreenState extends State<CommunityScreen> {
       setState(() {
         _isRecommendedLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadLatestPublicPosts() async {
+    try {
+      final posts =
+          await CommunityService.getLatestPublicPosts();
+
+      if (!mounted) return;
+
+      setState(() {
+        _latestPublicPosts = posts;
+        _isPrayerLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isPrayerLoading = false;
+      });
+
+      debugPrint('최신 기도문 불러오기 오류: $e');
     }
   }
 
@@ -244,167 +273,255 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
-  // 이음 기도문 리스트 (마지막 구분선 추가 완벽 반영)
+  // ============================================================
+  // 이음 기도문 리스트
+  // Firebase에서 최신 게시글 최대 3개 표시
+  // ============================================================
   Widget _buildPrayerList() {
-    final List<Map<String, String>> prayers = [
-      {
-        'title': '가족을 위한 기도',
-        'content': '사랑이 많으신 하나님 아버지,\n오늘도 저희 가족을 지켜주시고...',
-        'date': '08.04',
-        'tag': '가족',
-      },
-      {
-        'title': '회개 기도',
-        'content': '죄인인 저를 사랑한다 말하시는 하나님 아버지, 저의 죄를 고백합니다. 오늘...',
-        'date': '08.04',
-        'tag': '회개',
-      },
-      {
-        'title': '교회를 위한 기도',
-        'content': '하나님 아버지, 주님이 세우신 교회를 위해 기도합니다. 주님, 주님의 인도...',
-        'date': '08.04',
-        'tag': '교회',
-      },
-    ];
+    // 로딩 중
+    if (_isPrayerLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 30),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
-    // 💡 1. 전체를 Column으로 감싸줍니다.
+    // 게시글이 없는 경우
+    if (_latestPublicPosts.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Text(
+          '아직 작성된 기도문이 없습니다.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+            fontFamily: 'Pretendard',
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: [
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: prayers.length,
+          itemCount: _latestPublicPosts.length,
+
           separatorBuilder: (context, index) => Container(
             margin: const EdgeInsets.symmetric(vertical: 16),
             height: 1,
             color: const Color.fromRGBO(238, 238, 238, 1),
           ),
+
           itemBuilder: (context, index) {
-            final prayer = prayers[index];
+            final prayer = _latestPublicPosts[index];
+
+            final String postId =
+                prayer['postId'] as String? ?? '';
+
+            final String communityId =
+                prayer['communityId'] as String? ?? '';
+
+            final String title =
+                prayer['title'] as String? ?? '';
+
+            final String content =
+                prayer['content'] as String? ?? '';
+
+            final String tag =
+                prayer['category'] as String? ?? '기도';
+
+            final int amenCount =
+                prayer['amenCount'] as int? ?? 0;
+
             return GestureDetector(
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CommunityPostDetailScreen(
+                    builder: (context) =>
+                        CommunityPostDetailScreen(
+                      communityId: communityId,
+                      postId: postId,
                       communityName: '이음 기도문 게시판',
-                      title: prayer['title']!,
-                      content: prayer['content']!,
-                      tag: prayer['tag']!,
-                      amenCount: 52,
+                      title: title,
+                      content: content,
+                      tag: tag,
+                      amenCount: amenCount,
                     ),
                   ),
                 );
               },
+
               child: Padding(
                 padding: const EdgeInsets.only(left: 11.0),
                 child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 6),
-                        Text(
-                          prayer['title']!,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                            fontFamily: 'Pretendard',
-                          ),
-                        ),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 6),
 
-                        const SizedBox(height: 7),
-
-                        Text(
-                          prayer['content']!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.black87,
-                            fontFamily: 'Pretendard',
-                            height: 1.3,
-                          ),
-                        ),
-
-                        const SizedBox(height: 5),
-
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              prayer['date']!,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w400,
-                                color: Color.fromRGBO(113, 113, 113, 1),
-                                fontFamily: 'Pretendard',
-                              ),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                              fontFamily: 'Pretendard',
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              width: 1,
-                              height: 11,
-                              color: const Color.fromRGBO(113, 113, 113, 1),
+                          ),
+
+                          const SizedBox(height: 7),
+
+                          Text(
+                            content,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.black87,
+                              fontFamily: 'Pretendard',
+                              height: 1.3,
                             ),
-                            const SizedBox(width: 5),
-                            Container(
-                              width: 35,
-                              height: 17,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: const Color.fromRGBO(166, 166, 166, 1),
-                                  width: 0.5,
+                          ),
+
+                          const SizedBox(height: 5),
+
+                          Row(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                _formatPostDate(
+                                  prayer['createdAt'],
                                 ),
-                                borderRadius: BorderRadius.circular(13.4),
-                              ),
-                              child: Text(
-                                prayer['tag']!,
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w400,
-                                  color: Color.fromRGBO(166, 166, 166, 1),
+                                  color: Color.fromRGBO(
+                                    113,
+                                    113,
+                                    113,
+                                    1,
+                                  ),
                                   fontFamily: 'Pretendard',
-                                  height: 1.1,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  const SizedBox(width: 13),
-                  Container(
-                    width: 95,
-                    height: 95,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(7),
+                              const SizedBox(width: 8),
+
+                              Container(
+                                width: 1,
+                                height: 11,
+                                color: const Color.fromRGBO(
+                                  113,
+                                  113,
+                                  113,
+                                  1,
+                                ),
+                              ),
+
+                              const SizedBox(width: 5),
+
+                              Container(
+                                width: 35,
+                                height: 17,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color.fromRGBO(
+                                      166,
+                                      166,
+                                      166,
+                                      1,
+                                    ),
+                                    width: 0.5,
+                                  ),
+                                  borderRadius:
+                                      BorderRadius.circular(13.4),
+                                ),
+                                child: Text(
+                                  tag,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color.fromRGBO(
+                                      166,
+                                      166,
+                                      166,
+                                      1,
+                                    ),
+                                    fontFamily: 'Pretendard',
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+
+                    const SizedBox(width: 13),
+
+                    Container(
+                      width: 95,
+                      height: 95,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius:
+                            BorderRadius.circular(7),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
             );
           },
         ),
 
-        // 💡 2. 마지막 리스트 밑에 들어가는 구분선을 수동으로 하나 더 추가합니다!
+        // 마지막 구분선
         Container(
-          // 기존 symmetric(vertical: 16)에서 top: 16으로 변경하여 아래쪽 숨은 여백을 없앱니다!
           margin: const EdgeInsets.only(top: 16),
           height: 1,
           color: const Color.fromRGBO(238, 238, 238, 1),
         ),
       ],
     );
+  }
+
+  String _formatPostDate(dynamic value) {
+    if (value == null) {
+      return '';
+    }
+
+    DateTime? date;
+
+    if (value is Timestamp) {
+      date = value.toDate();
+    } else if (value is DateTime) {
+      date = value;
+    }
+
+    if (date == null) {
+      return '';
+    }
+
+    final month =
+        date.month.toString().padLeft(2, '0');
+
+    final day =
+        date.day.toString().padLeft(2, '0');
+
+    return '$month.$day';
   }
 
   // 추천 커뮤니티 그리드

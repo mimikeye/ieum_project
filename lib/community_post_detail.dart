@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CommunityPostDetailScreen extends StatefulWidget {
+  final String communityId;
+  final String postId;
   final String communityName;
   final String title;
   final String content;
@@ -11,6 +13,8 @@ class CommunityPostDetailScreen extends StatefulWidget {
 
   const CommunityPostDetailScreen({
     super.key,
+    required this.communityId,
+    required this.postId,
     required this.communityName,
     required this.title,
     required this.content,
