@@ -75,6 +75,7 @@ void _checkModifications() {
         context,
         MaterialPageRoute(
           builder: (context) => CommunityDetailScreen(
+            communityId: communityId,
             coverImage: _selectedImage != null
                 ? File(_selectedImage!.path)
                 : null,

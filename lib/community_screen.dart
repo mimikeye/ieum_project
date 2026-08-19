@@ -5,17 +5,20 @@ import 'package:ieum_project/community_latestpray.dart';
 import 'dart:io';
 
 import 'package:ieum_project/community_notice.dart';
+import 'package:ieum_project/community_service.dart';
 
 class CommunityDetailScreen extends StatefulWidget {
   final File? coverImage;
   final String communityName;
   final String description;
+  final String communityId;
 
   const CommunityDetailScreen({
     super.key,
     this.coverImage,
     required this.communityName,
     required this.description,
+    required this.communityId,
   });
 
   @override
@@ -26,8 +29,74 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   // 💡 설명글이 펼쳐졌는지(더보기 상태인지) 확인하는 변수
   bool _isDescriptionExpanded = false;
 
+  bool _isLoading = true;
+
+  Map<String, dynamic>? _communityData;
+  Map<String, dynamic>? _noticeData;
+  List<Map<String, dynamic>> _latestPosts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCommunityData();
+  }
+
+  Future<void> _loadCommunityData() async {
+    try {
+      final community =
+          await CommunityService.getCommunity(
+        communityId: widget.communityId,
+      );
+
+      final notice =
+          await CommunityService.getLatestNotice(
+        communityId: widget.communityId,
+      );
+
+      final latestPosts =
+          await CommunityService.getLatestPosts(
+        communityId: widget.communityId,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _communityData = community;
+        _noticeData = notice;
+        _latestPosts = latestPosts;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('커뮤니티 정보를 불러오지 못했습니다.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    final description =
+      (_communityData?['description'] as String?)?.isNotEmpty == true
+          ? _communityData!['description']
+          : widget.description;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -100,23 +169,23 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      widget.communityName.isNotEmpty
-                          ? widget.communityName
-                          : '이름 없는 커뮤니티',
+                            (_communityData?['name'] as String?)?.isNotEmpty == true
+                                ? _communityData!['name']
+                                : widget.communityName,
                       style: const TextStyle(
-                        fontSize: 24, // 제목 폰트 크기 살짝 키움
+                        fontSize: 25, // 제목 폰트 크기 살짝 키움
                         fontWeight: FontWeight.w500,
                         color: Colors.black,
-                        fontFamily: 'Pretendard',
+                        fontFamily: 'Petendard',
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    '1명',
-                    style: TextStyle(
+                  Text(
+                    '${_communityData?['memberCount'] ?? 0}명',
+                    style: const TextStyle(
                       fontSize: 12,
                       color: Colors.black87,
                       fontFamily: 'Pretendard',
@@ -125,6 +194,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 ],
               ),
             ),
+
+            
 
             // --- 3. 커뮤니티 소개글 영역 (흰색 배경) ---
             Padding(
@@ -135,13 +206,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      widget.description.isNotEmpty
-                          ? widget.description
-                          : '소개글이 없습니다.',
-                      maxLines: _isDescriptionExpanded ? null : 2,
-                      overflow: _isDescriptionExpanded
-                          ? TextOverflow.visible
-                          : TextOverflow.ellipsis,
+                      description.isNotEmpty ? description : '소개글이 없습니다.',
                       style: const TextStyle(
                         fontSize: 16,
                         color: Color.fromRGBO(64, 64, 64, 1),
@@ -188,12 +253,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 );
               },
             ),
-            _buildListItem(
-              title: '환영합니다!',
-              content: '새로운 커뮤니티가 개설되었습니다.',
-              date: '방금 전',
-              tag: '공지',
-            ),
+            if (_noticeData != null)
+              _buildListItem(
+                title: _noticeData!['title'] ?? '',
+                content: _noticeData!['content'] ?? '',
+                date: '공지',
+                tag: '공지',
+              ),
 
             Center(
               child: Container(
@@ -214,12 +280,27 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 );
               },
             ),
-            _buildListItem(
-              title: '첫 기도문입니다.',
-              content: '이곳에 기도문이 쌓이게 됩니다.',
-              date: '방금 전',
-              tag: '기도',
-            ),
+            if (_latestPosts.isEmpty)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(31, 16, 20, 16),
+                child: Text(
+                  '아직 작성된 기도문이 없습니다.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                    fontFamily: 'Pretendard',
+                  ),
+                ),
+              )
+            else
+              ..._latestPosts.map(
+                (post) => _buildListItem(
+                  title: post['title'] ?? '',
+                  content: post['content'] ?? '',
+                  date: '최근',
+                  tag: post['category'] ?? '기도',
+                ),
+              ),
             const SizedBox(height: 40),
           ],
         ),
