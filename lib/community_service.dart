@@ -755,5 +755,87 @@ class CommunityService {
 
     return results;
   }
+
+  /// ============================================================
+  /// 아멘 추가
+  /// ============================================================
+  static Future<void> addAmen({
+    required String postId,
+  }) async {
+    final uid = UserService.currentUid;
+
+    if (uid == null) {
+      throw Exception('로그인한 사용자를 찾을 수 없습니다.');
+    }
+
+    final postRef = _firestore
+        .collection('posts')
+        .doc(postId);
+
+    final amenRef = postRef
+        .collection('amens')
+        .doc(uid);
+
+    await _firestore.runTransaction((transaction) async {
+      final amenSnapshot = await transaction.get(amenRef);
+
+      // 이미 아멘을 눌렀다면 중복 처리하지 않음
+      if (amenSnapshot.exists) {
+        return;
+      }
+
+      transaction.set(amenRef, {
+        'createdAt': Timestamp.now(),
+      });
+
+      transaction.update(
+        postRef,
+        {
+          'amenCount': FieldValue.increment(1),
+          'updatedAt': Timestamp.now(),
+        },
+      );
+    });
+  }
+
+  /// ============================================================
+  /// 아멘 취소
+  /// ============================================================
+  static Future<void> removeAmen({
+    required String postId,
+  }) async {
+    final uid = UserService.currentUid;
+
+    if (uid == null) {
+      throw Exception('로그인한 사용자를 찾을 수 없습니다.');
+    }
+
+    final postRef = _firestore
+        .collection('posts')
+        .doc(postId);
+
+    final amenRef = postRef
+        .collection('amens')
+        .doc(uid);
+
+    await _firestore.runTransaction((transaction) async {
+      final amenSnapshot = await transaction.get(amenRef);
+
+      // 아멘을 누른 상태가 아니면 아무것도 하지 않음
+      if (!amenSnapshot.exists) {
+        return;
+      }
+
+      transaction.delete(amenRef);
+
+      transaction.update(
+        postRef,
+        {
+          'amenCount': FieldValue.increment(-1),
+          'updatedAt': Timestamp.now(),
+        },
+      );
+    });
+  }
 }
 

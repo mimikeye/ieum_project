@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:ieum_project/community_service.dart';
 
 class CommunityPostDetailScreen extends StatefulWidget {
   final String communityId;
   final String postId;
+  final bool isPublicPost;
   final String communityName;
   final String title;
   final String content;
@@ -15,6 +17,7 @@ class CommunityPostDetailScreen extends StatefulWidget {
     super.key,
     required this.communityId,
     required this.postId,
+    required this.isPublicPost,
     required this.communityName,
     required this.title,
     required this.content,
@@ -39,16 +42,50 @@ class _CommunityPostDetailScreenState
     _amenCount = widget.amenCount;
   }
 
-  void _toggleAmen() {
+  Future<void> _toggleAmen() async {
+    final previousIsAmen = _isAmen;
+
+    // 먼저 화면을 즉시 변경
     setState(() {
+      _isAmen = !_isAmen;
+
       if (_isAmen) {
-        _amenCount--;
-        _isAmen = false;
-      } else {
         _amenCount++;
-        _isAmen = true;
+      } else {
+        _amenCount--;
       }
     });
+
+    try {
+      if (_isAmen) {
+        await CommunityService.addAmen(
+          postId: widget.postId,
+        );
+      } else {
+        await CommunityService.removeAmen(
+          postId: widget.postId,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      // Firebase 저장에 실패하면 화면도 원래대로 복구
+      setState(() {
+        _isAmen = previousIsAmen;
+
+        if (_isAmen) {
+          _amenCount++;
+        } else {
+          _amenCount--;
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('아멘 처리에 실패했습니다.'),
+        ),
+      );
+    }
   }
 
   @override

@@ -328,6 +328,7 @@ Widget _buildPrayerListTab() {
                   prayer['category'] as String? ?? '',
               amenCount:
                   prayer['amenCount'] as int? ?? 0,
+              isPublicPost: true,
             ),
           ),
         );
