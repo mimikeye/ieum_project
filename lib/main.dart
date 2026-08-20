@@ -9,6 +9,7 @@ import 'home_page.dart';
 import 'calender_main.dart';
 import 'pray_page.dart';
 import 'splash_page.dart';
+import 'profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -161,10 +162,7 @@ class _RootScreenState extends State<RootScreen> {
           // 4. 프로필
           // =================================================
 
-          //const ProfileScreen(),
-          const Center(
-            child: Text('프로필 화면'),
-          ),
+          ProfileScreen(),
         ],
       ),
 
