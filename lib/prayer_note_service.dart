@@ -203,9 +203,7 @@ class PrayerNoteService {
       await publicPost.reference.update({
         'title': title.trim(),
         'content': content.trim(),
-        'category': categories.isNotEmpty
-            ? categories.first
-            : '기도',
+        'categories': categories,
         'imageUrls': updatedImageUrls,
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -234,9 +232,7 @@ class PrayerNoteService {
         await communityPost.reference.update({
           'title': title.trim(),
           'content': content.trim(),
-          'category': categories.isNotEmpty
-              ? categories.first
-              : '기도',
+          'categories': categories,
           'imageUrls': updatedImageUrls,
           'updatedAt': FieldValue.serverTimestamp(),
         });

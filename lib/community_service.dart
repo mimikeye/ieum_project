@@ -205,7 +205,7 @@ class CommunityService {
   static Future<String> createPost({
     required String title,
     required String content,
-    required String category,
+    required List<String> categories,
     required List<String> imageUrls,
     required String sourcePrayerNoteId,
   }) async {
@@ -228,7 +228,7 @@ class CommunityService {
       'content': content.trim(),
       'authorUid': uid,
       'authorNickname': nickname,
-      'category': category,
+      'categories': categories,
       'imageUrls': imageUrls,
       'sourcePrayerNoteId': sourcePrayerNoteId,
       'createdAt': now,

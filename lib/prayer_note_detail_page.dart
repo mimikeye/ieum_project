@@ -300,11 +300,9 @@ class _PrayerNoteDetailPageState
         final postId = await CommunityService.createPost(
           title: _note['title'] ?? '',
           content: _note['content'] ?? '',
-          category: (_note['categories'] as List?)
-                  ?.isNotEmpty ==
-              true
-              ? (_note['categories'] as List).first.toString()
-              : '',
+          categories: List<String>.from(
+            _note['categories'] ?? [],
+          ),
           imageUrls: List<String>.from(
             _note['imageUrls'] ?? [],
           ),
