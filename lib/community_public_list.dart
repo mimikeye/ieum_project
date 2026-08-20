@@ -14,7 +14,7 @@ class _PrayerDetailScreenState
     extends State<PrayerDetailScreen>
     with SingleTickerProviderStateMixin {
   // 💡 디폴트 상태: 아무것도 선택되지 않은 상태("")로 시작합니다.
-  String selectedTag = "";
+  List<String> selectedTags = [];
   String _currentSort = 'popular';
 
   late TabController _tabController;
@@ -53,8 +53,7 @@ class _PrayerDetailScreenState
     try {
       final posts = await CommunityService.getAllPublicPosts(
         sortBy: _currentSort,
-        category:
-            selectedTag.isEmpty ? null : selectedTag,
+        categories: selectedTags,
       );
 
       if (!mounted) return;
@@ -199,16 +198,12 @@ Widget _buildPrayerListTab() {
                   onTap: () async {
                     final List<String>? result = await showCategorySelectionSheet(
                       context: context,
-                      initialSelectedCategories: selectedTag.isNotEmpty ? [selectedTag] : [], 
+                      initialSelectedCategories: selectedTags, 
                     );
 
                     if (result != null) {
                       setState(() {
-                        selectedTag =
-                            result.isNotEmpty
-                                ? result.first
-                                : "";
-
+                        selectedTags = List<String>.from(result);
                         _isLoading = true;
                       });
 
@@ -294,15 +289,15 @@ Widget _buildPrayerListTab() {
 
   // 💡 카테고리 태그 칩 빌드 (토글 기능 포함)
   Widget _buildTagChip(String title) {
-    bool isSelected = title == selectedTag;
+    bool isSelected = selectedTags.contains(title);
     
     return GestureDetector(
       onTap: () async {
         setState(() {
-          if (selectedTag == title) {
-            selectedTag = "";
+          if (selectedTags.contains(title)) {
+            selectedTags.remove(title);
           } else {
-            selectedTag = title;
+            selectedTags.add(title);
           }
 
           _isLoading = true;

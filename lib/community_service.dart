@@ -439,15 +439,15 @@ class CommunityService {
   /// ============================================================
   static Future<List<Map<String, dynamic>>> getAllPublicPosts({
     required String sortBy,
-    String? category,
+    List<String> categories = const [],
   }) async {
     Query<Map<String, dynamic>> query =
         _firestore.collection('publicPosts');
 
-    if (category != null && category.isNotEmpty) {
+    if (categories.isNotEmpty) {
       query = query.where(
         'categories',
-        arrayContains: category,
+        arrayContainsAny: categories,
       );
     }
 
