@@ -333,8 +333,28 @@ class _CommunityScreenState extends State<CommunityScreen> {
             final String content =
                 prayer['content'] as String? ?? '';
 
+            final List<String> categories =
+                (prayer['categories'] as List<dynamic>? ?? [])
+                    .map((category) => category.toString())
+                    .where((category) => category.isNotEmpty)
+                    .toList();
+
+            // 기존 게시글은 category 하나만 저장되어 있을 수 있으므로
+            // categories가 비어 있으면 기존 category 값을 사용
+            if (categories.isEmpty) {
+              final String oldCategory =
+                  (prayer['category'] ?? '').toString();
+
+              if (oldCategory.isNotEmpty) {
+                categories.add(oldCategory);
+              }
+            }
+
             final String tag =
-                prayer['category'] as String? ?? '';
+                categories.isNotEmpty ? categories.first : '';
+
+            final int extraCategoryCount =
+                categories.length > 1 ? categories.length - 1 : 0;
 
             final int amenCount =
                 prayer['amenCount'] as int? ?? 0;
@@ -357,7 +377,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       communityName: '이음 기도문 게시판',
                       title: title,
                       content: content,
-                      tag: tag,
+                      categories: categories,
                       amenCount: amenCount,
                       imageUrls: imageUrls,
                       isPublicPost: true,
@@ -478,6 +498,24 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   ),
                                 ),
                               ),
+                              if (extraCategoryCount > 0) ...[
+                                const SizedBox(width: 2),
+
+                                Text(
+                                  '+$extraCategoryCount',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color.fromRGBO(
+                                      166,
+                                      166,
+                                      166,
+                                      1,
+                                    ),
+                                    fontFamily: 'Pretendard',
+                                  ),
+                                ),
+                              ],
                             ],
                             ],
                           ),

@@ -9,7 +9,7 @@ class CommunityPostDetailScreen extends StatefulWidget {
   final String communityName;
   final String title;
   final String content;
-  final String tag;
+  final List<String> categories;
   final int amenCount;
 
   final List<String> imageUrls;
@@ -22,7 +22,7 @@ class CommunityPostDetailScreen extends StatefulWidget {
     required this.communityName,
     required this.title,
     required this.content,
-    required this.tag,
+    required this.categories,
     required this.amenCount,
     this.imageUrls = const [],
   });
@@ -418,27 +418,33 @@ class _CommunityPostDetailScreenState
                             // ==================================================
                             // 카테고리
                             // ==================================================
-                            if (widget.tag.isNotEmpty) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(
-                                    color: const Color(0xFFA6A6A6),
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  widget.tag,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFFA6A6A6),
-                                    fontFamily: 'Pretendard',
-                                  ),
-                                ),
+                            if (widget.categories.isNotEmpty) ...[
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: widget.categories.map((category) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      border: Border.all(
+                                        color: const Color(0xFFA6A6A6),
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      category,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFFA6A6A6),
+                                        fontFamily: 'Pretendard',
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
                               ),
 
                               const SizedBox(height: 11),
