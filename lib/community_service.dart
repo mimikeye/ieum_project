@@ -980,5 +980,38 @@ class CommunityService {
       };
     }).toList();
   }
+
+    /// ============================================================
+    /// 커뮤니티 / 이음 기도 게시판 게시글 삭제
+    ///
+    /// isPublicPost == true
+    /// → publicPosts에서만 삭제
+    ///
+    /// isPublicPost == false
+    /// → 해당 communities/{communityId}/posts에서만 삭제
+    ///
+    /// 원본 기도문은 건드리지 않음
+    /// ============================================================
+    static Future<void> deleteCommunityPost({
+      required String postId,
+      required String communityId,
+      required bool isPublicPost,
+    }) async {
+      final DocumentReference<Map<String, dynamic>> postRef;
+
+      if (isPublicPost) {
+        postRef = _firestore
+            .collection('publicPosts')
+            .doc(postId);
+      } else {
+        postRef = _firestore
+            .collection('communities')
+            .doc(communityId)
+            .collection('posts')
+            .doc(postId);
+      }
+
+      await postRef.delete();
+    }
 }
 

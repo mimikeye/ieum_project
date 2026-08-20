@@ -149,6 +149,134 @@ class _CommunityPostDetailScreenState
     }
   }
 
+    Future<void> _deletePost() async {
+    try {
+      await CommunityService.deleteCommunityPost(
+        postId: widget.postId,
+        communityId: widget.communityId,
+        isPublicPost: widget.isPublicPost,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      debugPrint('게시글 삭제 실패: $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('게시글을 삭제하지 못했습니다.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showDeleteDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              24,
+              36,
+              24,
+              36,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '이 게시글을 삭제하시겠습니까?\n'
+                  '삭제한 게시글은 복구할 수 없습니다.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.black,
+                    height: 1.5,
+                    fontFamily: 'Pretendard',
+                  ),
+                ),
+
+                const SizedBox(height: 21),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 122,
+                      height: 45,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context, true);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEBEBEB),
+                          foregroundColor: Colors.black,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          '삭제',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 24),
+
+                    SizedBox(
+                      width: 122,
+                      height: 45,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context, false);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEBEBEB),
+                          foregroundColor: Colors.black,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          '취소',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (result == true) {
+      await _deletePost();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,18 +289,19 @@ class _CommunityPostDetailScreenState
             // 상단
             // ============================================================
             Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new,
-                    size: 20,
-                  ),
+            children: [
+              IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  size: 20,
                 ),
+              ),
 
-                Text(
+              Expanded(
+                child: Text(
                   widget.communityName,
                   style: const TextStyle(
                     fontSize: 20,
@@ -180,8 +309,60 @@ class _CommunityPostDetailScreenState
                     fontFamily: 'Pretendard',
                   ),
                 ),
-              ],
-            ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.only(right: 13),
+                child: PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert,
+                    color: Colors.black,
+                    size: 26,
+                  ),
+
+                  padding: EdgeInsets.zero,
+
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+
+                  elevation: 4,
+
+                  constraints: const BoxConstraints(
+                    minWidth: 85,
+                    maxWidth: 85,
+                  ),
+
+                  menuPadding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                  ),
+
+                  onSelected: (value) async {
+                    if (value == 'delete') {
+                      await _showDeleteDialog();
+                    }
+                  },
+
+                  itemBuilder: (context) => [
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      height: 36,
+                      child: Center(
+                        child: Text(
+                          '삭제하기',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.red,
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
 
             // ============================================================
             // 게시글 + 아멘 버튼
