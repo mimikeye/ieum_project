@@ -345,6 +345,36 @@ class CommunityService {
   }
 
   /// ============================================================
+  /// 특정 커뮤니티의 최신 공지 3개 가져오기
+  /// ============================================================
+  static Future<List<Map<String, dynamic>>>
+      getLatestNotices({
+    required String communityId,
+  }) async {
+    final snapshot = await _firestore
+        .collection('communities')
+        .doc(communityId)
+        .collection('posts')
+        .where(
+          'isNotice',
+          isEqualTo: true,
+        )
+        .orderBy(
+          'createdAt',
+          descending: true,
+        )
+        .limit(3)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return {
+        'postId': doc.id,
+        ...doc.data(),
+      };
+    }).toList();
+  }
+
+  /// ============================================================
   /// 커뮤니티 최신 기도문 가져오기
   ///
   /// 공지는 제외하고 최신 게시글 최대 3개
@@ -926,6 +956,32 @@ class CommunityService {
         .doc(communityId)
         .collection('posts')
         .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return {
+        'postId': doc.id,
+        ...doc.data(),
+      };
+    }).toList();
+  }
+
+  static Future<List<Map<String, dynamic>>>
+      getAllNotices({
+    required String communityId,
+  }) async {
+    final snapshot = await _firestore
+        .collection('communities')
+        .doc(communityId)
+        .collection('posts')
+        .where(
+          'isNotice',
+          isEqualTo: true,
+        )
+        .orderBy(
+          'createdAt',
+          descending: true,
+        )
         .get();
 
     return snapshot.docs.map((doc) {

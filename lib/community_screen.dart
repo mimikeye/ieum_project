@@ -34,7 +34,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   bool _isMember = false;
 
   Map<String, dynamic>? _communityData;
-  Map<String, dynamic>? _noticeData;
+  List<Map<String, dynamic>> _noticePosts = [];
   List<Map<String, dynamic>> _latestPosts = [];
 
   @override
@@ -55,8 +55,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         communityId: widget.communityId,
       );
 
-      final notice =
-          await CommunityService.getLatestNotice(
+      final noticePosts =
+          await CommunityService.getLatestNotices(
         communityId: widget.communityId,
       );
 
@@ -70,7 +70,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       setState(() {
         _communityData = community;
         _isMember = isMember;
-        _noticeData = notice;
+        _noticePosts = noticePosts;
         _latestPosts = latestPosts;
         _isLoading = false;
       });
@@ -411,17 +411,36 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const NoticeListScreen(),
+                    builder: (context) => NoticeListScreen(
+                      communityId: widget.communityId,
+                      communityName:
+                          (_communityData?['name'] as String?) ??
+                              widget.communityName,
+                    ),
                   ),
                 );
               },
             ),
-            if (_noticeData != null)
-              _buildListItem(
-                title: _noticeData!['title'] ?? '',
-                content: _noticeData!['content'] ?? '',
-                date: '공지',
-                tag: '공지',
+            if (_noticePosts.isEmpty)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(31, 16, 20, 16),
+                child: Text(
+                  '등록된 공지가 없습니다.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                    fontFamily: 'Pretendard',
+                  ),
+                ),
+              )
+            else
+              ..._noticePosts.map(
+                (notice) => _buildListItem(
+                  title: notice['title'] ?? '',
+                  content: notice['content'] ?? '',
+                  date: '공지',
+                  tag: '공지',
+                ),
               ),
 
             Center(

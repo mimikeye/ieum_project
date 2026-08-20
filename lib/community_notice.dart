@@ -1,21 +1,28 @@
 //하나의 커뮤니티 내 공지
 
 import 'package:flutter/material.dart';
+import 'community_service.dart';
+import 'community_post_detail.dart';
 
-class NoticeListScreen extends StatelessWidget {
-  const NoticeListScreen({super.key});
+class NoticeListScreen extends StatefulWidget {
+  final String communityId;
+  final String communityName;
+
+  const NoticeListScreen({
+    super.key,
+    required this.communityId,
+    required this.communityName,
+  });
 
   @override
+  State<NoticeListScreen> createState() =>
+      _NoticeListScreenState();
+}
+
+class _NoticeListScreenState
+    extends State<NoticeListScreen> {
+  @override
   Widget build(BuildContext context) {
-    // 임시 더미 데이터 (원하시는 데이터로 교체하세요)
-    final List<Map<String, String>> notices = List.generate(
-      10,
-      (index) => {
-        'title': '북한을 위한 기도합니다.',
-        'content': '하나님, 우리가 직접 만나거나 볼 수 없는 사람들이지만 북한에서 살아가는 한 사람 한 사람의 삶을 주님께서 ...',
-        'date': '08.02',
-      },
-    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -37,53 +44,120 @@ class NoticeListScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: ListView.separated(
-        itemCount: notices.length,
-        separatorBuilder: (context, index) => Padding(
-          // 💡 수정됨: 구분선의 좌우 여백을 21로 맞춤
-          padding: const EdgeInsets.symmetric(horizontal: 21.0),
-          child: Container(height: 1, color: Colors.grey.shade200),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: CommunityService.getAllNotices(
+          communityId: widget.communityId,
         ),
-        itemBuilder: (context, index) {
-          final notice = notices[index];
-          return Padding(
-            // 💡 수정됨: 리스트 아이템의 왼쪽/오른쪽 여백을 21로 맞춤
-            padding: const EdgeInsets.only(left: 25.0, right: 25.0, top: 20.0, bottom: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  notice['title']!,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                    fontFamily: 'Pretendard',
-                  ),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text(
+                '공지를 불러오지 못했습니다.',
+                style: TextStyle(
+                  fontFamily: 'Pretendard',
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  notice['content']!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black,
-                    height: 1.4,
-                    fontFamily: 'Pretendard',
-                  ),
+              ),
+            );
+          }
+
+          final notices = snapshot.data ?? [];
+
+          if (notices.isEmpty) {
+            return const Center(
+              child: Text(
+                '등록된 공지가 없습니다.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  fontFamily: 'Pretendard',
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  notice['date']!,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.black,
-                    fontFamily: 'Pretendard',
-                  ),
-                ),
-              ],
+              ),
+            );
+          }
+
+          return ListView.separated(
+            itemCount: notices.length,
+            separatorBuilder: (context, index) => Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 21.0,
+              ),
+              child: Container(
+                height: 1,
+                color: Colors.grey.shade200,
+              ),
             ),
+            itemBuilder: (context, index) {
+              final notice = notices[index];
+
+              final postId =
+                  notice['postId'] as String? ?? '';
+
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CommunityPostDetailScreen(
+                        communityId: widget.communityId,
+                        postId: postId,
+                        communityName: widget.communityName,
+                        title:
+                            notice['title'] as String? ?? '',
+                        content:
+                            notice['content'] as String? ?? '',
+                        tag: '공지',
+                        amenCount:
+                            notice['amenCount'] as int? ?? 0,
+                        isPublicPost: false,
+                      ),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    left: 25.0,
+                    right: 25.0,
+                    top: 20.0,
+                    bottom: 20.0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        notice['title'] as String? ?? '',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        notice['content'] as String? ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black,
+                          height: 1.4,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           );
         },
       ),

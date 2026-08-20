@@ -46,7 +46,7 @@ class _LatestListScreenState
         ),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: CommunityService.getLatestCommunityPosts(
+        future: CommunityService.getLatestPosts(
           communityId: widget.communityId,
         ),
         builder: (context, snapshot) {
