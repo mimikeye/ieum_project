@@ -110,12 +110,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
           final bool prayed = data?['prayed'] == true;
 
+          final bool wrotePrayer =
+              data?['wrotePrayer'] == true;
+
           final int prayerTime =
               (data?['prayerTime'] ?? 0) as int;
 
-          // 기도했거나 기도시간이 1초 이상이면 활동한 날
+          // 기도 시간을 측정했거나
+          // 기도문을 작성했으면 활동한 날
           activity[dateString] =
-              prayed || prayerTime > 0;
+              prayed ||
+              wrotePrayer ||
+              prayerTime > 0;
         } else {
           activity[dateString] = false;
         }
@@ -262,15 +268,19 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildSectionButton(
                 '기도문 작성',
                 '작성하기',
-                () {
-                  Navigator.push(
+                () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const PrayerWriteScreen(),
                     ),
                   );
+
+                  if (mounted) {
+                    await _loadWeeklyActivity();
+                  }
                 },
-              ), // 이건 아직 동작 없음
+              ),
               const SizedBox(height: 40),
 
               const Text(

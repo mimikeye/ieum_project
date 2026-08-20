@@ -366,7 +366,9 @@ class _CalendarPageState extends State<CalendarPage> {
     for (final doc in snapshot.docs) {
       final data = doc.data();
 
-      if (data['prayed'] == true) {
+      if (data['prayed'] == true ||
+          data['wrotePrayer'] == true ||
+          ((data['prayerTime'] ?? 0) as num) > 0) {
         activityDates.add(doc.id);
       }
     }

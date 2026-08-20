@@ -89,6 +89,7 @@ class _PrayerWriteScreenState extends State<PrayerWriteScreen> {
     await activityRef.set(
       {
         'wrotePrayer': true,
+        'prayed': true,
         'updatedAt': FieldValue.serverTimestamp(),
       },
       SetOptions(merge: true),
