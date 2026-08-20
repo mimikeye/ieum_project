@@ -498,28 +498,8 @@ Widget _buildPrayerListTab() {
                             ),
                           ),
                         ],
-
-                        const SizedBox(width: 8),
-
-                        Image.asset(
-                          'assets/images/amen_list_icon.png',
-                          width: 20,
-                          height: 20,
-                          fit: BoxFit.contain,
-                        ),
-
-                        const SizedBox(width: 3),
-
-                        Text(
-                          '$amenCount',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFF666666),
-                            fontFamily: 'Pretendard',
-                          ),
-                        ),
                       ],
+
                       const SizedBox(width: 8),
 
                       Image.asset(
