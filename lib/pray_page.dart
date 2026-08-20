@@ -462,12 +462,16 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
     final String? imageUrl =
         imageUrls.isNotEmpty ? imageUrls.first : null;
+    
+    final int extraCategoryCount =
+    categories.length > 1 ? categories.length - 1 : 0;
 
     return _buildPrayerListItem(
       title: title,
       content: content,
       date: displayDate,
       tag: tag,
+      extraCategoryCount: extraCategoryCount,
       imageUrl: imageUrl,
       onTap: () {
         Navigator.push(
@@ -488,6 +492,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
     required String content,
     required String date,
     required String tag,
+    required int extraCategoryCount,
     String? imageUrl,
     required VoidCallback onTap,
   }) {
@@ -569,6 +574,19 @@ class _PrayerScreenState extends State<PrayerScreen> {
                                 ),
                               ),
                             ),
+
+                            if (extraCategoryCount > 0) ...[
+                              const SizedBox(width: 2),
+                              Text(
+                                '+$extraCategoryCount',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0xFFA6A6A6),
+                                ),
+                              ),
+                            ],
                           ],
                         ],
                       ),

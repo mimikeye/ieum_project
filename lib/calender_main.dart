@@ -140,7 +140,10 @@ class _CalendarPageState extends State<CalendarPage> {
     }
 
     final String tag =
-        categories.isNotEmpty ? categories.first : '';
+    categories.isNotEmpty ? categories.first : '';
+
+    final int additionalCategoryCount =
+        categories.length > 1 ? categories.length - 1 : 0;
 
     final String? imageUrl =
         imageUrls.isNotEmpty ? imageUrls.first : null;
@@ -257,6 +260,24 @@ class _CalendarPageState extends State<CalendarPage> {
                               ),
                             ),
                           ),
+                          if (additionalCategoryCount > 0) ...[
+                            const SizedBox(width: 2),
+
+                            Text(
+                              '+$additionalCategoryCount',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Pretendard',
+                                color: Color.fromRGBO(
+                                  166,
+                                  166,
+                                  166,
+                                  1,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                         ],
                       ),
