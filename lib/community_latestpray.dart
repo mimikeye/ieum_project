@@ -217,12 +217,7 @@ class _LatestListScreenState
                                     ),
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: const Color.fromRGBO(
-                                          166,
-                                          166,
-                                          166,
-                                          1,
-                                        ),
+                                        color: const Color(0xFFA6A6A6),
                                         width: 0.8,
                                       ),
                                       borderRadius: BorderRadius.circular(13.4),
@@ -231,18 +226,27 @@ class _LatestListScreenState
                                       categories.first,
                                       style: const TextStyle(
                                         fontSize: 11,
-                                        color: Color.fromRGBO(
-                                          166,
-                                          166,
-                                          166,
-                                          1,
-                                        ),
+                                        color: Color(0xFFA6A6A6),
                                         fontFamily: 'Pretendard',
                                       ),
                                     ),
                                   ),
+
+                                  if (categories.length > 1) ...[
+                                    const SizedBox(width: 2),
+
+                                    Text(
+                                      '+${categories.length - 1}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w400,
+                                        color: Color(0xFFA6A6A6),
+                                        fontFamily: 'Pretendard',
+                                      ),
+                                    ),
+                                  ],
                                 ],
-                              ],
+                              ]
                             ),
                           ],
                         ),

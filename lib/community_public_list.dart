@@ -451,7 +451,7 @@ Widget _buildPrayerListTab() {
                         ),
                       ),
 
-                      if ((prayer['category'] as String? ?? '').isNotEmpty) ...[
+                      if (categories.isNotEmpty) ...[
                         const SizedBox(width: 8),
 
                         Container(
@@ -474,7 +474,7 @@ Widget _buildPrayerListTab() {
                             borderRadius: BorderRadius.circular(13.4),
                           ),
                           child: Text(
-                            prayer['category'] as String? ?? '',
+                            categories.first,
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFFA6A6A6),
@@ -482,6 +482,20 @@ Widget _buildPrayerListTab() {
                             ),
                           ),
                         ),
+
+                        if (categories.length > 1) ...[
+                          const SizedBox(width: 2),
+
+                          Text(
+                            '+${categories.length - 1}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFFA6A6A6),
+                              fontFamily: 'Pretendard',
+                            ),
+                          ),
+                        ],
                       ],
                     ],
                   ),

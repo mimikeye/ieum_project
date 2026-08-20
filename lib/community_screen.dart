@@ -670,6 +670,20 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                             ),
                           ),
                         ),
+
+                        if (categories.length > 1) ...[
+                          const SizedBox(width: 2),
+
+                          Text(
+                            '+${categories.length - 1}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFFA6A6A6),
+                              fontFamily: 'Pretendard',
+                            ),
+                          ),
+                        ],
                       ],
                     ],
                   ),
