@@ -486,8 +486,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 ),
               )
             else
-              ..._latestPosts.map(
-                (post) {
+              ..._latestPosts.asMap().entries.expand(
+                (entry) {
+                  final index = entry.key;
+                  final post = entry.value;
+
                   final List<String> categories =
                       (post['categories'] as List<dynamic>? ?? [])
                           .map((category) => category.toString())
@@ -503,7 +506,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     }
                   }
 
-                  return _buildListItem(
+                  final postItem = _buildListItem(
                     postId: post['postId'] ?? '',
                     title: post['title'] ?? '',
                     content: post['content'] ?? '',
@@ -514,6 +517,27 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                       post['imageUrls'] ?? [],
                     ),
                   );
+
+                  if (index == _latestPosts.length - 1) {
+                    return [postItem];
+                  }
+
+                  return [
+                    postItem,
+
+                    Center(
+                      child: Container(
+                        height: 0.5,
+                        width: 340,
+                        color: const Color.fromRGBO(
+                          219,
+                          219,
+                          219,
+                          1,
+                        ),
+                      ),
+                    ),
+                  ];
                 },
               ),
             const SizedBox(height: 40),

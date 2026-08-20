@@ -676,18 +676,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
             clipBehavior: Clip.antiAlias,
-            child: Column(
+            child: Stack(
               children: [
-                Expanded(
-                  flex: 5,
-                  child: imageUrl != null &&
-                          imageUrl.isNotEmpty
+                // 전체 카드에 사진이 깔림
+                Positioned.fill(
+                  child: imageUrl != null && imageUrl.isNotEmpty
                       ? Image.network(
                           imageUrl,
-                          width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder:
-                              (context, error, stackTrace) {
+                          errorBuilder: (context, error, stackTrace) {
                             return Container(
                               color: Colors.grey.shade400,
                             );
@@ -698,13 +695,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         ),
                 ),
 
-                Expanded(
-                  flex: 4,
+                // 아래쪽 반투명 영역
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 49,
                   child: Container(
-                    width: double.infinity,
-                    color: Colors.transparent,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4),
+                    color: Colors.white.withOpacity(0.72),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     alignment: Alignment.center,
                     child: Text(
                       communityName,
