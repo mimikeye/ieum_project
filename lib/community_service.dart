@@ -446,8 +446,8 @@ class CommunityService {
 
     if (category != null && category.isNotEmpty) {
       query = query.where(
-        'category',
-        isEqualTo: category,
+        'categories',
+        arrayContains: category,
       );
     }
 
