@@ -113,7 +113,7 @@ class _NoticeListScreenState
                             notice['title'] as String? ?? '',
                         content:
                             notice['content'] as String? ?? '',
-                        tag: '공지',
+                        categories: const ['공지'],
                         amenCount:
                             notice['amenCount'] as int? ?? 0,
                         isPublicPost: false,

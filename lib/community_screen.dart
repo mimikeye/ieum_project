@@ -441,7 +441,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   title: notice['title'] ?? '',
                   content: notice['content'] ?? '',
                   date: '공지',
-                  tag: '공지',
+                  categories: const ['공지'],
                   amenCount: notice['amenCount'] ?? 0,
                   imageUrls: List<String>.from(
                     notice['imageUrls'] ?? [],
@@ -487,17 +487,34 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               )
             else
               ..._latestPosts.map(
-                (post) => _buildListItem(
-                  postId: post['postId'] ?? '',
-                  title: post['title'] ?? '',
-                  content: post['content'] ?? '',
-                  date: '최근',
-                  tag: post['category'] ?? '',
-                  amenCount: post['amenCount'] ?? 0,
-                  imageUrls: List<String>.from(
-                    post['imageUrls'] ?? [],
-                  ),
-                ),
+                (post) {
+                  final List<String> categories =
+                      (post['categories'] as List<dynamic>? ?? [])
+                          .map((category) => category.toString())
+                          .where((category) => category.isNotEmpty)
+                          .toList();
+
+                  if (categories.isEmpty) {
+                    final String oldCategory =
+                        (post['category'] ?? '').toString();
+
+                    if (oldCategory.isNotEmpty) {
+                      categories.add(oldCategory);
+                    }
+                  }
+
+                  return _buildListItem(
+                    postId: post['postId'] ?? '',
+                    title: post['title'] ?? '',
+                    content: post['content'] ?? '',
+                    date: '최근',
+                    categories: categories,
+                    amenCount: post['amenCount'] ?? 0,
+                    imageUrls: List<String>.from(
+                      post['imageUrls'] ?? [],
+                    ),
+                  );
+                },
               ),
             const SizedBox(height: 40),
           ],
@@ -545,7 +562,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     required String title,
     required String content,
     required String date,
-    required String tag,
+    required List<String> categories,
     required int amenCount,
     required List<String> imageUrls,
   }) {
@@ -563,7 +580,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                       widget.communityName,
               title: title,
               content: content,
-              tag: tag,
+              categories: categories,
               amenCount: amenCount,
               imageUrls: imageUrls,
             ),
@@ -620,7 +637,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                           fontFamily: 'Pretendard',
                         ),
                       ),
-                      if (tag.isNotEmpty) ...[
+                      if (categories.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 6.0),
                           child: Text(
@@ -639,16 +656,16 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                           ),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: Colors.grey.shade300,
-                              width: 1,
+                              color: const Color(0xFFA6A6A6),
+                              width: 0.8,
                             ),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(13.4),
                           ),
                           child: Text(
-                            tag,
+                            categories.first,
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Colors.grey,
+                              color: Color(0xFFA6A6A6),
                               fontFamily: 'Pretendard',
                             ),
                           ),

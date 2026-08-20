@@ -346,6 +346,21 @@ Widget _buildPrayerListTab() {
     Map<String, dynamic> prayer,
   ) {
 
+    final List<String> categories =
+        (prayer['categories'] as List<dynamic>? ?? [])
+            .map((category) => category.toString())
+            .where((category) => category.isNotEmpty)
+            .toList();
+
+    if (categories.isEmpty) {
+      final String oldCategory =
+          (prayer['category'] ?? '').toString();
+
+      if (oldCategory.isNotEmpty) {
+        categories.add(oldCategory);
+      }
+    }
+
     final List<String> imageUrls =
     (prayer['imageUrls'] as List<dynamic>? ?? [])
         .map((image) => image.toString())
@@ -372,8 +387,7 @@ Widget _buildPrayerListTab() {
                   prayer['title'] as String? ?? '',
               content:
                   prayer['content'] as String? ?? '',
-              tag:
-                  prayer['category'] as String? ?? '',
+              categories: categories,
               amenCount:
                   prayer['amenCount'] as int? ?? 0,
               imageUrls: imageUrls,

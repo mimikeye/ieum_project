@@ -106,8 +106,20 @@ class _LatestListScreenState
               final content =
                   post['content'] as String? ?? '';
 
-              final tag =
-                  post['category'] as String? ?? '';
+              final List<String> categories =
+                  (post['categories'] as List<dynamic>? ?? [])
+                      .map((category) => category.toString())
+                      .where((category) => category.isNotEmpty)
+                      .toList();
+
+              if (categories.isEmpty) {
+                final String oldCategory =
+                    (post['category'] ?? '').toString();
+
+                if (oldCategory.isNotEmpty) {
+                  categories.add(oldCategory);
+                }
+              }
 
               final amenCount =
                   post['amenCount'] as int? ?? 0;
@@ -132,7 +144,7 @@ class _LatestListScreenState
                         communityName: widget.communityName,
                         title: title,
                         content: content,
-                        tag: tag,
+                        categories: categories,
                         amenCount: amenCount,
                         imageUrls: imageUrls,
                         isPublicPost: false,
@@ -186,7 +198,7 @@ class _LatestListScreenState
                                     fontFamily: 'Pretendard',
                                   ),
                                 ),
-                                if (tag.isNotEmpty) ...[
+                                if (categories.isNotEmpty) ...[
                                   const Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 6.0),
                                     child: Text(
@@ -216,7 +228,7 @@ class _LatestListScreenState
                                       borderRadius: BorderRadius.circular(13.4),
                                     ),
                                     child: Text(
-                                      tag,
+                                      categories.first,
                                       style: const TextStyle(
                                         fontSize: 11,
                                         color: Color.fromRGBO(
