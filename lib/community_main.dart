@@ -346,8 +346,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     .toList();
 
             return GestureDetector(
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
@@ -364,6 +364,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                   ),
                 );
+
+                if (result == true && mounted) {
+                  await _loadLatestPublicPosts();
+                }
               },
 
               child: Padding(
