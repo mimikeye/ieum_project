@@ -6,6 +6,7 @@ import 'dart:math';
 import 'pray_time.dart';
 import 'user_service.dart';
 import 'pray_write_page.dart';
+import 'community_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Map<String, bool> _weeklyActivity = {};
   bool _isLoadingWeeklyActivity = true;
+
+  List<Map<String, dynamic>> _joinedCommunities = [];
+  bool _isLoadingCommunities = true;
 
   final Color _primaryLightGreen = const Color.fromRGBO(234, 248, 203, 1);
   final Color _greyBackground = const Color.fromRGBO(242, 242, 247, 1);
@@ -46,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _todayVerse = _verses[Random().nextInt(_verses.length)];
     _loadUserNickname();
     _loadWeeklyActivity();
+    _loadJoinedCommunities();
   }
 
   Future<void> _loadWeeklyActivity() async {
@@ -140,6 +145,29 @@ class _HomeScreenState extends State<HomeScreen> {
       _weeklyActivity = activity;
       _isLoadingWeeklyActivity = false;
     });
+  }
+
+  Future<void> _loadJoinedCommunities() async {
+    try {
+      final communities =
+          await CommunityService.getMyJoinedCommunities();
+
+      if (!mounted) return;
+
+      setState(() {
+        _joinedCommunities = communities;
+        _isLoadingCommunities = false;
+      });
+    } catch (e) {
+      debugPrint('가입한 커뮤니티 불러오기 오류: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _joinedCommunities = [];
+        _isLoadingCommunities = false;
+      });
+    }
   }
 
   Future<void> _loadUserNickname() async {
@@ -290,16 +318,44 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 140,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _buildCommunityCard('북한 중보기도\n커뮤니티', Colors.blue.shade100),
-                    const SizedBox(width: 16),
-                    _buildCommunityCard('22학번\n한동기도클럽', Colors.grey.shade300),
-                    const SizedBox(width: 16),
-                    _buildCommunityCard('애국자\n기도모임', Colors.red.shade100),
-                  ],
-                ),
+                child: _isLoadingCommunities
+                    ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : _joinedCommunities.isEmpty
+                        ? const Center(
+                            child: Text(
+                              '가입한 커뮤니티가 없습니다.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                                fontFamily: 'Pretendard',
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _joinedCommunities.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(width: 16),
+                            itemBuilder: (context, index) {
+                              final community =
+                                  _joinedCommunities[index];
+
+                              final String name =
+                              (community['communityName'] ?? '')
+                                  .toString();
+
+                          final String coverImageUrl =
+                              (community['coverImageUrl'] ?? '')
+                                  .toString();
+
+                          return _buildCommunityCard(
+                            name,
+                            coverImageUrl,
+                          );
+                            },
+                          ),
               ),
               const SizedBox(height: 40),
             ],
@@ -418,20 +474,51 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCommunityCard(String title, Color bgColor) {
+  Widget _buildCommunityCard(
+    String title,
+    String coverImageUrl,
+  ) {
     return Container(
       width: 120,
       decoration: BoxDecoration(
-        color: bgColor,
+        color: Colors.grey.shade300,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Stack(
         children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SizedBox(
+              width: double.infinity,
+              height: double.infinity,
+              child: coverImageUrl.isNotEmpty
+                  ? Image.network(
+                      coverImageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (
+                        context,
+                        error,
+                        stackTrace,
+                      ) {
+                        return Container(
+                          color: Colors.grey.shade300,
+                        );
+                      },
+                    )
+                  : Container(
+                      color: Colors.grey.shade300,
+                    ),
+            ),
+          ),
+
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              padding: const EdgeInsets.symmetric(
+                vertical: 12,
+                horizontal: 8,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.8),
                 borderRadius: const BorderRadius.only(
@@ -442,7 +529,12 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, height: 1.2),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                  fontFamily: 'Pretendard',
+                ),
               ),
             ),
           ),
