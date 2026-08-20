@@ -346,6 +346,15 @@ Widget _buildPrayerListTab() {
     Map<String, dynamic> prayer,
   ) {
 
+    final String title =
+    prayer['title'] as String? ?? '';
+
+    final String content =
+        prayer['content'] as String? ?? '';
+
+    final int amenCount =
+        prayer['amenCount'] as int? ?? 0;
+
     final List<String> categories =
         (prayer['categories'] as List<dynamic>? ?? [])
             .map((category) => category.toString())
@@ -375,27 +384,25 @@ Widget _buildPrayerListTab() {
         final postId =
             prayer['postId'] as String? ?? '';
 
-        final result = await Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CommunityPostDetailScreen(
-              communityId: communityId,
+            builder: (context) =>
+                CommunityPostDetailScreen(
+              communityId: '',
               postId: postId,
-              communityName:
-                  prayer['communityName'] as String? ?? '이음 기도문',
-              title:
-                  prayer['title'] as String? ?? '',
-              content:
-                  prayer['content'] as String? ?? '',
+              communityName: '이음 기도 게시판',
+              title: title,
+              content: content,
               categories: categories,
-              amenCount:
-                  prayer['amenCount'] as int? ?? 0,
+              amenCount: amenCount,
               imageUrls: imageUrls,
               isPublicPost: true,
             ),
           ),
         );
-        if (result == true && mounted) {
+
+        if (mounted) {
           await _loadPosts();
         }
       },
