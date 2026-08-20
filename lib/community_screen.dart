@@ -540,7 +540,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     );
   }
 
-  Widget _buildListItem({
+    Widget _buildListItem({
     required String postId,
     required String title,
     required String content,
@@ -577,84 +577,95 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           top: 16,
           bottom: 16,
         ),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-                fontFamily: 'Pretendard',
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              content,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-                height: 1.4,
-                fontFamily: 'Pretendard',
-              ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Text(
-                  date,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontFamily: 'Pretendard',
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6.0),
-                  child: Text(
-                    '|',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    tag,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
                     style: const TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                       fontFamily: 'Pretendard',
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Text(
+                    content,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                      height: 1.4,
+                      fontFamily: 'Pretendard',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text(
+                        date,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                      const Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 6.0),
+                        child: Text(
+                          '|',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1,
+                          ),
+                          borderRadius:
+                              BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          tag,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
 
-              if (imageUrls.isNotEmpty) ...[
-              const SizedBox(height: 12),
+            if (imageUrls.isNotEmpty) ...[
+              const SizedBox(width: 13),
 
               ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius:
+                    BorderRadius.circular(7),
                 child: Image.network(
                   imageUrls.first,
-                  width: double.infinity,
-                  fit: BoxFit.contain,
+                  width: 95,
+                  height: 95,
+                  fit: BoxFit.cover,
                   errorBuilder: (
                     context,
                     error,
@@ -665,7 +676,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 ),
               ),
             ],
-
           ],
         ),
       ),

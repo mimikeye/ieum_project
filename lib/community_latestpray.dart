@@ -147,99 +147,104 @@ class _LatestListScreenState
                     top: 20.0,
                     bottom: 20.0,
                   ),
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                          fontFamily: 'Pretendard',
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        content,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black,
-                          height: 1.4,
-                          fontFamily: 'Pretendard',
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Text(
-                            '최근',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black,
-                              fontFamily: 'Pretendard',
-                            ),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 6.0,
-                            ),
-                            child: Text(
-                              '|',
-                              style: TextStyle(
-                                color: Colors.black54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding:
-                                const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: const Color.fromRGBO(
-                                  166,
-                                  166,
-                                  166,
-                                  1,
-                                ),
-                                width: 0.8,
-                              ),
-                              borderRadius:
-                                  BorderRadius.circular(13.4),
-                            ),
-                            child: Text(
-                              tag,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
                               style: const TextStyle(
-                                fontSize: 11,
-                                color: Color.fromRGBO(
-                                  166,
-                                  166,
-                                  166,
-                                  1,
-                                ),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
                                 fontFamily: 'Pretendard',
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            Text(
+                              content,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black,
+                                height: 1.4,
+                                fontFamily: 'Pretendard',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                const Text(
+                                  '최근',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                    fontFamily: 'Pretendard',
+                                  ),
+                                ),
+                                const Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 6.0),
+                                  child: Text(
+                                    '|',
+                                    style: TextStyle(
+                                      color: Colors.black54,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color.fromRGBO(
+                                        166,
+                                        166,
+                                        166,
+                                        1,
+                                      ),
+                                      width: 0.8,
+                                    ),
+                                    borderRadius:
+                                        BorderRadius.circular(13.4),
+                                  ),
+                                  child: Text(
+                                    tag,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color.fromRGBO(
+                                        166,
+                                        166,
+                                        166,
+                                        1,
+                                      ),
+                                      fontFamily: 'Pretendard',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
 
                       if (imageUrls.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-
+                        const SizedBox(width: 16),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: Image.network(
                             imageUrls.first,
-                            width: double.infinity,
-                            fit: BoxFit.contain,
+                            width: 95,
+                            height: 95,
+                            fit: BoxFit.cover,
                             errorBuilder: (
                               context,
                               error,
@@ -250,7 +255,6 @@ class _LatestListScreenState
                           ),
                         ),
                       ],
-                      
                     ],
                   ),
                 ),
