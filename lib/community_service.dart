@@ -758,9 +758,14 @@ class CommunityService {
 
   /// ============================================================
   /// 아멘 추가
+  ///
+  /// 이음 기도 게시판과 일반 커뮤니티의 아멘을
+  /// 서로 독립적으로 저장합니다.
   /// ============================================================
   static Future<void> addAmen({
     required String postId,
+    required String communityId,
+    required bool isPublicPost,
   }) async {
     final uid = UserService.currentUid;
 
@@ -768,18 +773,38 @@ class CommunityService {
       throw Exception('로그인한 사용자를 찾을 수 없습니다.');
     }
 
-    final postRef = _firestore
-        .collection('posts')
-        .doc(postId);
+    // ------------------------------------------------------------
+    // 게시글 위치 결정
+    //
+    // 이음 기도 게시판
+    // → publicPosts/{postId}
+    //
+    // 일반 커뮤니티
+    // → communities/{communityId}/posts/{postId}
+    // ------------------------------------------------------------
+    final DocumentReference<Map<String, dynamic>> postRef;
+
+    if (isPublicPost) {
+      postRef = _firestore
+          .collection('publicPosts')
+          .doc(postId);
+    } else {
+      postRef = _firestore
+          .collection('communities')
+          .doc(communityId)
+          .collection('posts')
+          .doc(postId);
+    }
 
     final amenRef = postRef
         .collection('amens')
         .doc(uid);
 
     await _firestore.runTransaction((transaction) async {
-      final amenSnapshot = await transaction.get(amenRef);
+      final amenSnapshot =
+          await transaction.get(amenRef);
 
-      // 이미 아멘을 눌렀다면 중복 처리하지 않음
+      // 이미 아멘한 경우 중복 추가 방지
       if (amenSnapshot.exists) {
         return;
       }
@@ -788,21 +813,21 @@ class CommunityService {
         'createdAt': Timestamp.now(),
       });
 
-      transaction.update(
-        postRef,
-        {
-          'amenCount': FieldValue.increment(1),
-          'updatedAt': Timestamp.now(),
-        },
-      );
+      transaction.update(postRef, {
+        'amenCount': FieldValue.increment(1),
+      });
     });
   }
 
   /// ============================================================
   /// 아멘 취소
+  ///
+  /// 현재 보고 있는 게시판에서만 아멘을 취소합니다.
   /// ============================================================
   static Future<void> removeAmen({
     required String postId,
+    required String communityId,
+    required bool isPublicPost,
   }) async {
     final uid = UserService.currentUid;
 
@@ -810,32 +835,105 @@ class CommunityService {
       throw Exception('로그인한 사용자를 찾을 수 없습니다.');
     }
 
-    final postRef = _firestore
-        .collection('posts')
-        .doc(postId);
+    // ------------------------------------------------------------
+    // 게시글 위치 결정
+    // ------------------------------------------------------------
+    final DocumentReference<Map<String, dynamic>> postRef;
+
+    if (isPublicPost) {
+      postRef = _firestore
+          .collection('publicPosts')
+          .doc(postId);
+    } else {
+      postRef = _firestore
+          .collection('communities')
+          .doc(communityId)
+          .collection('posts')
+          .doc(postId);
+    }
 
     final amenRef = postRef
         .collection('amens')
         .doc(uid);
 
     await _firestore.runTransaction((transaction) async {
-      final amenSnapshot = await transaction.get(amenRef);
+      final amenSnapshot =
+          await transaction.get(amenRef);
 
-      // 아멘을 누른 상태가 아니면 아무것도 하지 않음
+      // 아멘 기록이 없으면 취소할 것도 없음
       if (!amenSnapshot.exists) {
         return;
       }
 
       transaction.delete(amenRef);
 
-      transaction.update(
-        postRef,
-        {
-          'amenCount': FieldValue.increment(-1),
-          'updatedAt': Timestamp.now(),
-        },
-      );
+      transaction.update(postRef, {
+        'amenCount': FieldValue.increment(-1),
+      });
     });
+  }
+
+  /// ============================================================
+  /// 현재 사용자가 이 게시판의 게시글에
+  /// 이미 아멘했는지 확인
+  /// ============================================================
+  static Future<bool> hasUserAmen({
+    required String postId,
+    required String communityId,
+    required bool isPublicPost,
+  }) async {
+    final uid = UserService.currentUid;
+
+    if (uid == null) {
+      return false;
+    }
+
+    final DocumentReference<Map<String, dynamic>> postRef;
+
+    // 이음 기도 게시판
+    if (isPublicPost) {
+      postRef = _firestore
+          .collection('publicPosts')
+          .doc(postId);
+    }
+
+    // 일반 커뮤니티
+    else {
+      postRef = _firestore
+          .collection('communities')
+          .doc(communityId)
+          .collection('posts')
+          .doc(postId);
+    }
+
+    final amenDoc = await postRef
+        .collection('amens')
+        .doc(uid)
+        .get();
+
+    return amenDoc.exists;
+  }
+
+  /// ============================================================
+  /// 특정 커뮤니티의 최신 게시글 전체 가져오기
+  /// ============================================================
+  static Future<List<Map<String, dynamic>>>
+      getLatestCommunityPosts({
+    required String communityId,
+  }) async {
+    final snapshot = await _firestore
+        .collection('communities')
+        .doc(communityId)
+        .collection('posts')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return {
+        'postId': doc.id,
+        ...doc.data(),
+      };
+    }).toList();
   }
 }
 

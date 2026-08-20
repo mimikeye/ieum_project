@@ -438,7 +438,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const LatestListScreen(),
+                    builder: (context) => LatestListScreen(
+                      communityId: widget.communityId,
+                      communityName:
+                          (_communityData?['name'] as String?) ??
+                              widget.communityName,
+                    ),
                   ),
                 );
               },

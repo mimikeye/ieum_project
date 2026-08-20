@@ -351,7 +351,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       content: content,
                       tag: tag,
                       amenCount: amenCount,
-                      isPublicPost: false,
+                      isPublicPost: true,
                     ),
                   ),
                 );

@@ -40,6 +40,26 @@ class _CommunityPostDetailScreenState
   void initState() {
     super.initState();
     _amenCount = widget.amenCount;
+    _loadAmenStatus();
+  }
+
+  Future<void> _loadAmenStatus() async {
+    try {
+      final hasAmen =
+          await CommunityService.hasUserAmen(
+        postId: widget.postId,
+        communityId: widget.communityId,
+        isPublicPost: widget.isPublicPost,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isAmen = hasAmen;
+      });
+    } catch (e) {
+      debugPrint('아멘 상태를 불러오지 못했습니다: $e');
+    }
   }
 
   Future<void> _toggleAmen() async {
@@ -59,12 +79,16 @@ class _CommunityPostDetailScreenState
     try {
       if (_isAmen) {
         await CommunityService.addAmen(
-          postId: widget.postId,
-        );
+        postId: widget.postId,
+        communityId: widget.communityId,
+        isPublicPost: widget.isPublicPost,
+      );
       } else {
         await CommunityService.removeAmen(
-          postId: widget.postId,
-        );
+        postId: widget.postId,
+        communityId: widget.communityId,
+        isPublicPost: widget.isPublicPost,
+      );
       }
     } catch (e) {
       if (!mounted) return;
