@@ -308,6 +308,7 @@ class _PrayerNoteDetailPageState
           imageUrls: List<String>.from(
             _note['imageUrls'] ?? [],
           ),
+          sourcePrayerNoteId: widget.noteId,
         );
 
         // 2. 선택한 게시판에 실제 게시

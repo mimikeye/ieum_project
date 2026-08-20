@@ -207,6 +207,7 @@ class CommunityService {
     required String content,
     required String category,
     required List<String> imageUrls,
+    required String sourcePrayerNoteId,
   }) async {
     final uid = UserService.currentUid;
 
@@ -229,6 +230,7 @@ class CommunityService {
       'authorNickname': nickname,
       'category': category,
       'imageUrls': imageUrls,
+      'sourcePrayerNoteId': sourcePrayerNoteId,
       'createdAt': now,
       'updatedAt': now,
     });
@@ -1012,6 +1014,25 @@ class CommunityService {
       }
 
       await postRef.delete();
+    }
+
+    // ============================================================
+    // 기도문 원본 수정 시 연결된 공유 게시글 수정
+    // ============================================================
+    static Future<void> updateSharedPost({
+      required DocumentReference<Map<String, dynamic>> postRef,
+      required String title,
+      required String content,
+      required String category,
+      required List<String> imageUrls,
+    }) async {
+      await postRef.update({
+        'title': title.trim(),
+        'content': content.trim(),
+        'category': category,
+        'imageUrls': imageUrls,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
     }
 }
 

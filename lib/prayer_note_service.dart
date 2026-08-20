@@ -183,6 +183,65 @@ class PrayerNoteService {
       'imageUrls': imageUrl == null ? [] : [imageUrl],
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
+    // ============================================================
+    // 3. 이음 기도 게시판에 공유된 동일 기도문 수정
+    // ============================================================
+
+    final updatedImageUrls =
+        imageUrl == null ? <String>[] : [imageUrl];
+
+    final publicPostsSnapshot = await _firestore
+        .collection('publicPosts')
+        .where(
+          'sourcePrayerNoteId',
+          isEqualTo: noteId,
+        )
+        .get();
+
+    for (final publicPost in publicPostsSnapshot.docs) {
+      await publicPost.reference.update({
+        'title': title.trim(),
+        'content': content.trim(),
+        'category': categories.isNotEmpty
+            ? categories.first
+            : '기도',
+        'imageUrls': updatedImageUrls,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // ============================================================
+    // 4. 커뮤니티에 공유된 동일 기도문 수정
+    // ============================================================
+
+    final communitiesSnapshot = await _firestore
+        .collection('communities')
+        .get();
+
+    for (final communityDoc in communitiesSnapshot.docs) {
+      final communityPostsSnapshot = await _firestore
+          .collection('communities')
+          .doc(communityDoc.id)
+          .collection('posts')
+          .where(
+            'sourcePrayerNoteId',
+            isEqualTo: noteId,
+          )
+          .get();
+
+      for (final communityPost in communityPostsSnapshot.docs) {
+        await communityPost.reference.update({
+          'title': title.trim(),
+          'content': content.trim(),
+          'category': categories.isNotEmpty
+              ? categories.first
+              : '기도',
+          'imageUrls': updatedImageUrls,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
   }
 
   static Future<void> deletePrayerNote({
@@ -194,30 +253,104 @@ class PrayerNoteService {
       throw Exception('로그인한 사용자의 username을 찾을 수 없습니다.');
     }
 
+    // ============================================================
+    // 1. 원본 기도문 참조
+    // ============================================================
+
     final noteRef = _firestore
         .collection('prayerNotes')
         .doc(username)
         .collection('notes')
         .doc(noteId);
 
-    // 이미지가 있는 경우 Storage에서도 삭제
-    final storageRef = _storage
-        .ref()
-        .child('prayerImages')
-        .child(username)
-        .child(noteId)
-        .child('image.jpg');
-
     try {
-      await storageRef.delete();
-    } on FirebaseException catch (e) {
-      if (e.code != 'object-not-found') {
-        rethrow;
-      }
-    }
+      // ============================================================
+      // 2. 이음 기도 게시판에서 연결된 게시글 찾기
+      // ============================================================
 
-    // Firestore 기도문 삭제
-    await noteRef.delete();
+      final publicPostsSnapshot = await _firestore
+          .collection('publicPosts')
+          .where(
+            'sourcePrayerNoteId',
+            isEqualTo: noteId,
+          )
+          .get();
+
+      // ============================================================
+      // 3. 커뮤니티 전체 조회
+      // ============================================================
+
+      final communitiesSnapshot = await _firestore
+          .collection('communities')
+          .get();
+
+      // ============================================================
+      // 4. 삭제 Batch 생성
+      // ============================================================
+
+      final batch = _firestore.batch();
+
+      // 이음 기도 게시판 게시글 삭제
+      for (final doc in publicPostsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // ============================================================
+      // 5. 각 커뮤니티 안의 연결된 게시글 찾고 삭제
+      // ============================================================
+
+      for (final communityDoc in communitiesSnapshot.docs) {
+        final communityPostsSnapshot = await _firestore
+            .collection('communities')
+            .doc(communityDoc.id)
+            .collection('posts')
+            .where(
+              'sourcePrayerNoteId',
+              isEqualTo: noteId,
+            )
+            .get();
+
+        for (final postDoc in communityPostsSnapshot.docs) {
+          batch.delete(postDoc.reference);
+        }
+      }
+
+      // ============================================================
+      // 6. 원본 기도문 삭제
+      // ============================================================
+
+      batch.delete(noteRef);
+
+      // ============================================================
+      // 7. Firestore 삭제 실행
+      // ============================================================
+
+      await batch.commit();
+
+      // ============================================================
+      // 8. 기도문 사진 Storage 삭제
+      // ============================================================
+
+      final storageRef = _storage
+          .ref()
+          .child('prayerImages')
+          .child(username)
+          .child(noteId)
+          .child('image.jpg');
+
+      try {
+        await storageRef.delete();
+      } on FirebaseException catch (e) {
+        if (e.code != 'object-not-found') {
+          rethrow;
+        }
+      }
+    } catch (e) {
+      // 실제 원인을 터미널에서 확인하기 위한 로그
+      print('기도문 삭제 실패: $e');
+
+      rethrow;
+    }
   }
 
   static Future<QuerySnapshot<Map<String, dynamic>>>
