@@ -232,15 +232,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
           // --- 더보기 버튼 ---
           if (hasMore)
             InkWell(
-              onTap: () {
-                // 💡 더보기 버튼 클릭 시 상세 화면으로 이동하도록 수정!
-                Navigator.push(
+              onTap: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    // PrayerDetailScreen은 새로 만들 파일의 클래스 이름입니다.
-                    builder: (context) => const PrayerDetailScreen(), 
+                    builder: (context) => const PrayerDetailScreen(),
                   ),
                 );
+
+                if (result == true && mounted) {
+                  await _loadLatestPublicPosts();
+                }
               },
               borderRadius: BorderRadius.circular(4),
               child: Padding(

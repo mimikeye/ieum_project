@@ -550,8 +550,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     required List<String> imageUrls,
   }) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => CommunityPostDetailScreen(
@@ -569,6 +569,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             ),
           ),
         );
+
+        if (result == true && mounted) {
+          await _loadCommunityData();
+        }
       },
       child: Padding(
         padding: const EdgeInsets.only(

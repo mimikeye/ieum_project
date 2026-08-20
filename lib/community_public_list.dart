@@ -353,14 +353,14 @@ Widget _buildPrayerListTab() {
         .toList();
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         final communityId =
             prayer['communityId'] as String? ?? '';
 
         final postId =
             prayer['postId'] as String? ?? '';
 
-        Navigator.push(
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => CommunityPostDetailScreen(
@@ -381,6 +381,9 @@ Widget _buildPrayerListTab() {
             ),
           ),
         );
+        if (result == true && mounted) {
+          await _loadPosts();
+        }
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(
