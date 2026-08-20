@@ -10,9 +10,14 @@ class PrayerDetailScreen extends StatefulWidget {
   State<PrayerDetailScreen> createState() => _PrayerDetailScreenState();
 }
 
-class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
+class _PrayerDetailScreenState
+    extends State<PrayerDetailScreen>
+    with SingleTickerProviderStateMixin {
   // 💡 디폴트 상태: 아무것도 선택되지 않은 상태("")로 시작합니다.
   String selectedTag = "";
+  String _currentSort = 'popular';
+
+  late TabController _tabController;
 
   bool _isLoading = true;
   List<Map<String, dynamic>> _posts = [];
@@ -20,13 +25,36 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
   @override
   void initState() {
     super.initState();
+
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+    );
+
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        return;
+      }
+
+      setState(() {
+        _currentSort =
+            _tabController.index == 0
+                ? 'popular'
+                : 'latest';
+      });
+
+      _loadPosts();
+    });
+
     _loadPosts();
   }
 
   Future<void> _loadPosts() async {
     try {
       final posts = await CommunityService.getAllPublicPosts(
-        sortBy: 'latest',
+        sortBy: _currentSort,
+        category:
+            selectedTag.isEmpty ? null : selectedTag,
       );
 
       if (!mounted) return;
@@ -36,6 +64,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('이음 기도 게시판 불러오기 오류: $e');
       if (!mounted) return;
 
       setState(() {
@@ -109,7 +138,8 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
             child: Padding(
               // 뒤로 가기 버튼(X: 21.8)과 거의 동일하게 좌우 여백을 설정합니다.
               padding: const EdgeInsets.symmetric(horizontal: 21.8),
-              child: const TabBar(
+              child: TabBar(
+                controller: _tabController,
                 indicatorColor: Colors.black,
                 indicatorWeight: 2,
                 indicatorSize: TabBarIndicatorSize.tab, // 인디케이터 바가 탭 영역 끝까지 차도록 설정
@@ -135,6 +165,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
           ),
         ), 
         body: TabBarView(
+          controller: _tabController,
           children: [
             // 💡 1. 인기순 탭의 화면
             _buildPrayerListTab(),
@@ -173,8 +204,15 @@ Widget _buildPrayerListTab() {
 
                     if (result != null) {
                       setState(() {
-                        selectedTag = result.isNotEmpty ? result.first : "";
+                        selectedTag =
+                            result.isNotEmpty
+                                ? result.first
+                                : "";
+
+                        _isLoading = true;
                       });
+
+                      await _loadPosts();
                     }
                   },
                   child: Container(
@@ -259,15 +297,18 @@ Widget _buildPrayerListTab() {
     bool isSelected = title == selectedTag;
     
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         setState(() {
-          // 이미 선택된 카테고리를 누르면 해제(""), 아니면 새로 선택(title)
           if (selectedTag == title) {
-            selectedTag = ""; 
+            selectedTag = "";
           } else {
-            selectedTag = title; 
+            selectedTag = title;
           }
+
+          _isLoading = true;
         });
+
+        await _loadPosts();
       },
       child: Container(
         width: 48,

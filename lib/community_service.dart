@@ -435,17 +435,13 @@ class CommunityService {
   /// - 특정 카테고리만 조회
   /// - null이면 전체 카테고리
   /// ============================================================
-  static Future<List<Map<String, dynamic>>>
-      getAllPublicPosts({
-    String sortBy = 'latest',
+  static Future<List<Map<String, dynamic>>> getAllPublicPosts({
+    required String sortBy,
     String? category,
   }) async {
-    Query query = _firestore
-        .collection('publicPosts');
+    Query<Map<String, dynamic>> query =
+        _firestore.collection('publicPosts');
 
-    // ------------------------------------------------------------
-    // 카테고리 필터
-    // ------------------------------------------------------------
     if (category != null && category.isNotEmpty) {
       query = query.where(
         'category',
@@ -453,14 +449,10 @@ class CommunityService {
       );
     }
 
-    // ------------------------------------------------------------
-    // 정렬
-    // ------------------------------------------------------------
     if (sortBy == 'popular') {
-      query = query.orderBy(
-        'amenCount',
-        descending: true,
-      );
+      query = query
+          .orderBy('amenCount', descending: true)
+          .orderBy('createdAt', descending: true);
     } else {
       query = query.orderBy(
         'createdAt',
@@ -471,12 +463,9 @@ class CommunityService {
     final snapshot = await query.get();
 
     return snapshot.docs.map((doc) {
-      final data =
-          doc.data() as Map<String, dynamic>;
-
       return {
         'postId': doc.id,
-        ...data,
+        ...doc.data(),
       };
     }).toList();
   }
