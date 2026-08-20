@@ -230,6 +230,27 @@ class _LatestListScreenState
                           ),
                         ],
                       ),
+
+                      if (imageUrls.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            imageUrls.first,
+                            width: double.infinity,
+                            fit: BoxFit.contain,
+                            errorBuilder: (
+                              context,
+                              error,
+                              stackTrace,
+                            ) {
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ),
+                      ],
+                      
                     ],
                   ),
                 ),
