@@ -129,12 +129,12 @@ class _LatestListScreenState
               );
 
               return GestureDetector(
-                onTap: () {
+                onTap: () async {
                   if (postId.isEmpty) {
                     return;
                   }
 
-                  Navigator.push(
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
@@ -151,6 +151,10 @@ class _LatestListScreenState
                       ),
                     ),
                   );
+
+                  if (result == true && mounted) {
+                    setState(() {});
+                  }
                 },
                 child: Padding(
                   padding: const EdgeInsets.only(
@@ -246,6 +250,24 @@ class _LatestListScreenState
                                     ),
                                   ],
                                 ],
+                                const SizedBox(width: 8),
+
+                                Image.asset(
+                                  'assets/images/amen_list_icon.png',
+                                  width: 22,
+                                  height: 22,
+                                ),
+
+                                const SizedBox(width: 4),
+
+                                Text(
+                                  amenCount.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF666666),
+                                    fontFamily: 'Pretendard',
+                                  ),
+                                ),
                               ]
                             ),
                           ],
