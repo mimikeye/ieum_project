@@ -334,7 +334,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 prayer['content'] as String? ?? '';
 
             final String tag =
-                prayer['category'] as String? ?? '기도';
+                prayer['category'] as String? ?? '';
 
             final int amenCount =
                 prayer['amenCount'] as int? ?? 0;
@@ -430,6 +430,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 ),
                               ),
 
+                              if (tag.isNotEmpty) ...[
                               const SizedBox(width: 8),
 
                               Container(
@@ -459,8 +460,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                     ),
                                     width: 0.5,
                                   ),
-                                  borderRadius:
-                                      BorderRadius.circular(13.4),
+                                  borderRadius: BorderRadius.circular(13.4),
                                 ),
                                 child: Text(
                                   tag,
@@ -478,6 +478,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   ),
                                 ),
                               ),
+                            ],
                             ],
                           ),
                         ],

@@ -348,13 +348,17 @@ class _PrayerNotesPageState extends State<PrayerNotesPage> {
                               color: Colors.grey.shade600,
                             ),
                           ),
+                          if (tag.isNotEmpty) ...[
                           const SizedBox(width: 8),
+
                           Container(
                             width: 0.5,
                             height: 11,
                             color: const Color.fromRGBO(113, 113, 113, 100),
                           ),
+
                           const SizedBox(width: 8),
+
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 7),
                             decoration: BoxDecoration(
@@ -374,6 +378,7 @@ class _PrayerNotesPageState extends State<PrayerNotesPage> {
                               ),
                             ),
                           ),
+                        ],
                         ],
                       ),
                     ],

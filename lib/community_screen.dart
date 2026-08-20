@@ -492,7 +492,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   title: post['title'] ?? '',
                   content: post['content'] ?? '',
                   date: '최근',
-                  tag: post['category'] ?? '기도',
+                  tag: post['category'] ?? '',
                   amenCount: post['amenCount'] ?? 0,
                   imageUrls: List<String>.from(
                     post['imageUrls'] ?? [],
@@ -620,39 +620,40 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                           fontFamily: 'Pretendard',
                         ),
                       ),
-                      const Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 6.0),
-                        child: Text(
-                          '|',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
+                      if (tag.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 6.0),
+                          child: Text(
+                            '|',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.grey.shade300,
-                            width: 1,
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
                           ),
-                          borderRadius:
-                              BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          tag,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
-                            fontFamily: 'Pretendard',
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            tag,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                              fontFamily: 'Pretendard',
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ],

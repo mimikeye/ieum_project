@@ -210,6 +210,7 @@ class _CalendarPageState extends State<CalendarPage> {
                             ),
                           ),
 
+                          if (tag.isNotEmpty) ...[
                           const SizedBox(width: 8),
 
                           Container(
@@ -231,8 +232,7 @@ class _CalendarPageState extends State<CalendarPage> {
                             ),
                             decoration: BoxDecoration(
                               color: Colors.transparent,
-                              borderRadius:
-                                  BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: const Color.fromRGBO(
                                   166,
@@ -257,6 +257,7 @@ class _CalendarPageState extends State<CalendarPage> {
                               ),
                             ),
                           ),
+                        ],
                         ],
                       ),
                     ],

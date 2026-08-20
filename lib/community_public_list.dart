@@ -437,37 +437,38 @@ Widget _buildPrayerListTab() {
                         ),
                       ),
 
-                      const SizedBox(width: 8),
+                      if ((prayer['category'] as String? ?? '').isNotEmpty) ...[
+                        const SizedBox(width: 8),
 
-                      Container(
-                        width: 1,
-                        height: 11,
-                        color: const Color(0xFF717171),
-                      ),
-
-                      const SizedBox(width: 5),
-
-                      Container(
-                        width: 35,
-                        height: 17,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color(0xFFA6A6A6),
-                            width: 0.5,
-                          ),
-                          borderRadius:
-                              BorderRadius.circular(13.4),
+                        Container(
+                          width: 1,
+                          height: 11,
+                          color: const Color(0xFF717171),
                         ),
-                        child: Text(
-                          prayer['category'] as String? ?? '',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFFA6A6A6),
-                            fontFamily: 'Pretendard',
+
+                        const SizedBox(width: 5),
+
+                        Container(
+                          width: 35,
+                          height: 17,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: const Color(0xFFA6A6A6),
+                              width: 0.5,
+                            ),
+                            borderRadius: BorderRadius.circular(13.4),
+                          ),
+                          child: Text(
+                            prayer['category'] as String? ?? '',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFA6A6A6),
+                              fontFamily: 'Pretendard',
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ],

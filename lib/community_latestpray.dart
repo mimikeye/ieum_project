@@ -107,7 +107,7 @@ class _LatestListScreenState
                   post['content'] as String? ?? '';
 
               final tag =
-                  post['category'] as String? ?? '기도';
+                  post['category'] as String? ?? '';
 
               final amenCount =
                   post['amenCount'] as int? ?? 0;
@@ -186,50 +186,50 @@ class _LatestListScreenState
                                     fontFamily: 'Pretendard',
                                   ),
                                 ),
-                                const Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(horizontal: 6.0),
-                                  child: Text(
-                                    '|',
-                                    style: TextStyle(
-                                      color: Colors.black54,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: const Color.fromRGBO(
-                                        166,
-                                        166,
-                                        166,
-                                        1,
+                                if (tag.isNotEmpty) ...[
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 6.0),
+                                    child: Text(
+                                      '|',
+                                      style: TextStyle(
+                                        color: Colors.black54,
+                                        fontSize: 12,
                                       ),
-                                      width: 0.8,
                                     ),
-                                    borderRadius:
-                                        BorderRadius.circular(13.4),
                                   ),
-                                  child: Text(
-                                    tag,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Color.fromRGBO(
-                                        166,
-                                        166,
-                                        166,
-                                        1,
+
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: const Color.fromRGBO(
+                                          166,
+                                          166,
+                                          166,
+                                          1,
+                                        ),
+                                        width: 0.8,
                                       ),
-                                      fontFamily: 'Pretendard',
+                                      borderRadius: BorderRadius.circular(13.4),
+                                    ),
+                                    child: Text(
+                                      tag,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color.fromRGBO(
+                                          166,
+                                          166,
+                                          166,
+                                          1,
+                                        ),
+                                        fontFamily: 'Pretendard',
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ],
                             ),
                           ],

@@ -539,32 +539,37 @@ class _PrayerScreenState extends State<PrayerScreen> {
                               color: Colors.grey.shade600,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 0.5,
-                            height: 11,
-                            color: const Color.fromRGBO(113, 113, 113, 100),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7),
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color.fromRGBO(166, 166, 166, 1),
+                          if (tag.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+
+                            Container(
+                              width: 0.5,
+                              height: 11,
+                              color: const Color.fromRGBO(113, 113, 113, 100),
+                            ),
+
+                            const SizedBox(width: 8),
+
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color.fromRGBO(166, 166, 166, 1),
+                                ),
+                              ),
+                              child: Text(
+                                tag,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Pretendard',
+                                  color: widget._tagTextColor,
+                                ),
                               ),
                             ),
-                            child: Text(
-                              tag,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Pretendard',
-                                color: widget._tagTextColor,
-                              ),
-                            ),
-                          ),
+                          ],
                         ],
                       ),
                     ],

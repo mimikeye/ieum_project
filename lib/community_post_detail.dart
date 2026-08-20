@@ -418,29 +418,31 @@ class _CommunityPostDetailScreenState
                             // ==================================================
                             // 카테고리
                             // ==================================================
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(
-                                  color: const Color(0xFFA6A6A6),
+                            if (widget.tag.isNotEmpty) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 5,
                                 ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                widget.tag,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFFA6A6A6),
-                                  fontFamily: 'Pretendard',
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(
+                                    color: const Color(0xFFA6A6A6),
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  widget.tag,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFFA6A6A6),
+                                    fontFamily: 'Pretendard',
+                                  ),
                                 ),
                               ),
-                            ),
 
-                            const SizedBox(height: 11),
+                              const SizedBox(height: 11),
+                            ],
 
                             // ==================================================
                             // 제목 / 카테고리 아래 굵은 선

@@ -304,7 +304,7 @@ class _PrayerNoteDetailPageState
                   ?.isNotEmpty ==
               true
               ? (_note['categories'] as List).first.toString()
-              : '기도',
+              : '',
           imageUrls: List<String>.from(
             _note['imageUrls'] ?? [],
           ),
