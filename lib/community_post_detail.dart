@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ieum_project/community_service.dart';
 
 class CommunityPostDetailScreen extends StatefulWidget {
@@ -39,8 +40,44 @@ class _CommunityPostDetailScreenState
   @override
   void initState() {
     super.initState();
+
     _amenCount = widget.amenCount;
+
+    _loadPostData();
     _loadAmenStatus();
+  }
+
+  Future<void> _loadPostData() async {
+    try {
+      final postRef = widget.isPublicPost
+          ? FirebaseFirestore.instance
+              .collection('publicPosts')
+              .doc(widget.postId)
+          : FirebaseFirestore.instance
+              .collection('communities')
+              .doc(widget.communityId)
+              .collection('posts')
+              .doc(widget.postId);
+
+      final snapshot = await postRef.get();
+
+      if (!snapshot.exists || !mounted) {
+        return;
+      }
+
+      final data = snapshot.data();
+
+      if (data == null) {
+        return;
+      }
+
+      setState(() {
+        _amenCount =
+            (data['amenCount'] as num?)?.toInt() ?? 0;
+      });
+    } catch (e) {
+      debugPrint('게시글 데이터를 불러오지 못했습니다: $e');
+    }
   }
 
   Future<void> _loadAmenStatus() async {

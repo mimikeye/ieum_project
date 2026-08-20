@@ -304,6 +304,13 @@ Widget _buildPrayerListTab() {
   Widget _buildDetailPrayerCard(
     Map<String, dynamic> prayer,
   ) {
+
+    final List<String> imageUrls =
+    (prayer['imageUrls'] as List<dynamic>? ?? [])
+        .map((image) => image.toString())
+        .where((image) => image.isNotEmpty)
+        .toList();
+
     return GestureDetector(
       onTap: () {
         final communityId =
@@ -328,6 +335,7 @@ Widget _buildPrayerListTab() {
                   prayer['category'] as String? ?? '',
               amenCount:
                   prayer['amenCount'] as int? ?? 0,
+              imageUrls: imageUrls,
               isPublicPost: true,
             ),
           ),
@@ -422,17 +430,26 @@ Widget _buildPrayerListTab() {
               ),
             ),
 
-            const SizedBox(width: 13),
+            if (imageUrls.isNotEmpty) ...[
+              const SizedBox(width: 13),
 
-            Container(
-              width: 95,
-              height: 95,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius:
-                    BorderRadius.circular(7),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(7),
+                child: Image.network(
+                  imageUrls.first,
+                  width: 95,
+                  height: 95,
+                  fit: BoxFit.cover,
+                  errorBuilder: (
+                    context,
+                    error,
+                    stackTrace,
+                  ) {
+                    return const SizedBox.shrink();
+                  },
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:ieum_project/community_latestpray.dart';
+import 'package:ieum_project/community_post_detail.dart';
 import 'dart:io';
 
 import 'package:ieum_project/community_notice.dart';
@@ -436,10 +437,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             else
               ..._noticePosts.map(
                 (notice) => _buildListItem(
+                  postId: notice['postId'] ?? '',
                   title: notice['title'] ?? '',
                   content: notice['content'] ?? '',
                   date: '공지',
                   tag: '공지',
+                  amenCount: notice['amenCount'] ?? 0,
+                  imageUrls: List<String>.from(
+                    notice['imageUrls'] ?? [],
+                  ),
                 ),
               ),
 
@@ -482,10 +488,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             else
               ..._latestPosts.map(
                 (post) => _buildListItem(
+                  postId: post['postId'] ?? '',
                   title: post['title'] ?? '',
                   content: post['content'] ?? '',
                   date: '최근',
                   tag: post['category'] ?? '기도',
+                  amenCount: post['amenCount'] ?? 0,
+                  imageUrls: List<String>.from(
+                    post['imageUrls'] ?? [],
+                  ),
                 ),
               ),
             const SizedBox(height: 40),
@@ -529,75 +540,113 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     );
   }
 
-  // 💡 2. 리스트 아이템 (리스트만 오른쪽으로 밀어내기)
   Widget _buildListItem({
+    required String postId,
     required String title,
     required String content,
     required String date,
     required String tag,
+    required int amenCount,
+    required List<String> imageUrls,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 31, right: 20, top: 16, bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-              fontFamily: 'Pretendard',
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CommunityPostDetailScreen(
+              communityId: widget.communityId,
+              postId: postId,
+              isPublicPost: false,
+              communityName:
+                  (_communityData?['name'] as String?) ??
+                      widget.communityName,
+              title: title,
+              content: content,
+              tag: tag,
+              amenCount: amenCount,
+              imageUrls: imageUrls,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            content,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              height: 1.4,
-              fontFamily: 'Pretendard',
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(
+          left: 31,
+          right: 20,
+          top: 16,
+          bottom: 16,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+                fontFamily: 'Pretendard',
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Text(
-                date,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  fontFamily: 'Pretendard',
-                ),
+            const SizedBox(height: 6),
+            Text(
+              content,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                height: 1.4,
+                fontFamily: 'Pretendard',
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6.0),
-                child: Text(
-                  '|',
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300, width: 1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  tag,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Text(
+                  date,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     color: Colors.grey,
                     fontFamily: 'Pretendard',
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6.0),
+                  child: Text(
+                    '|',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.grey.shade300,
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    tag,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey,
+                      fontFamily: 'Pretendard',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

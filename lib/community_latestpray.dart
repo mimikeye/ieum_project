@@ -112,6 +112,10 @@ class _LatestListScreenState
               final amenCount =
                   post['amenCount'] as int? ?? 0;
 
+              final imageUrls = List<String>.from(
+                post['imageUrls'] ?? [],
+              );
+
               return GestureDetector(
                 onTap: () {
                   if (postId.isEmpty) {
@@ -130,6 +134,7 @@ class _LatestListScreenState
                         content: content,
                         tag: tag,
                         amenCount: amenCount,
+                        imageUrls: imageUrls,
                         isPublicPost: false,
                       ),
                     ),
